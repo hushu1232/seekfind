@@ -10,6 +10,9 @@
   POST /api/index/text      从文本构建索引
   GET  /api/index/status    索引状态
   WS   /ws/chat             WebSocket 聊天通道
+
+消息验证：
+  所有 WS 消息使用 schemas.py 中的 Pydantic model 进行类型验证。
 """
 
 import json
@@ -25,6 +28,11 @@ from agent import QiuWenAgent
 from memory.short_term import ShortTermMemory
 from indexer.build_index import IndexBuilder
 from indexer.crawler import CrawledDoc
+from schemas import (
+    UserMessage, PageEventMessage, FeedbackMessage, AudioMessage,
+    ModelConfigUpdate, IndexUrlRequest, IndexTextRequest,
+    IndexStatusResponse, PageContext,
+)
 
 logger = structlog.get_logger()
 
@@ -74,12 +82,12 @@ async def get_config():
 
 
 @app.post("/api/config/model")
-async def update_model_config(body: dict):
+async def update_model_config(body: ModelConfigUpdate):
     global agent
-    if "model_strategy" in body:
-        settings.model_strategy = body["model_strategy"]
-    if "ollama_model" in body:
-        settings.ollama_model = body["ollama_model"]
+    if body.model_strategy:
+        settings.model_strategy = body.model_strategy
+    if body.ollama_model:
+        settings.ollama_model = body.ollama_model
     if agent:
         await agent.reload_model()
     return {"status": "ok", "model_strategy": settings.model_strategy.value}
@@ -89,31 +97,20 @@ async def update_model_config(body: dict):
 # 文档索引 API
 # ---------------------------------------------------------------------------
 @app.post("/api/index/url")
-async def index_from_url(body: dict):
-    """从 URL 爬取并构建索引。"""
-    url = body.get("url", "")
-    if not url:
-        return JSONResponse(status_code=400, content={"error": "请提供 URL"})
-
+async def index_from_url(body: IndexUrlRequest):
     builder = IndexBuilder()
     try:
-        count = await builder.build_from_url(url, agent._long_term)
+        count = await builder.build_from_url(body.url, agent._long_term)
         return {"status": "ok", "chunks": count}
     except Exception as e:
-        logger.error("URL 索引构建失败", url=url, error=str(e))
+        logger.error("URL 索引构建失败", url=body.url, error=str(e))
         return JSONResponse(status_code=500, content={"error": str(e)})
 
 
 @app.post("/api/index/text")
-async def index_from_text(body: dict):
-    """从文本构建索引。"""
-    text = body.get("text", "")
-    title = body.get("title", "用户导入")
-    if not text:
-        return JSONResponse(status_code=400, content={"error": "请提供文本"})
-
+async def index_from_text(body: IndexTextRequest):
     builder = IndexBuilder()
-    doc = CrawledDoc(url=f"user://{title}", title=title, text=text)
+    doc = CrawledDoc(url=f"user://{body.title}", title=body.title, text=body.text)
     try:
         count = await builder.build_from_docs([doc], agent._long_term)
         return {"status": "ok", "chunks": count}
@@ -122,16 +119,15 @@ async def index_from_text(body: dict):
         return JSONResponse(status_code=500, content={"error": str(e)})
 
 
-@app.get("/api/index/status")
+@app.get("/api/index/status", response_model=IndexStatusResponse)
 async def index_status():
-    """返回索引状态。"""
     if not agent or not agent._long_term:
-        return {"status": "not_ready", "doc_count": 0}
+        return IndexStatusResponse(status="not_ready", doc_count=0)
     try:
         count = await agent._long_term.get_collection_count("docs")
-        return {"status": "ok", "doc_count": count}
+        return IndexStatusResponse(status="ok", doc_count=count)
     except Exception as e:
-        return {"status": "error", "error": str(e)}
+        return IndexStatusResponse(status="error", error=str(e))
 
 
 # ---------------------------------------------------------------------------
@@ -139,6 +135,15 @@ async def index_status():
 # ---------------------------------------------------------------------------
 @app.websocket("/ws/chat")
 async def websocket_chat(ws: WebSocket):
+    """
+    WebSocket 聊天主通道。
+
+    消息验证流程：
+      1. 接收 JSON 文本
+      2. 根据 "type" 字段选择对应的 Pydantic model 验证
+      3. 验证失败返回错误消息
+      4. 验证成功分发到对应处理逻辑
+    """
     await ws.accept()
     session_id = str(uuid.uuid4())
     session = ShortTermMemory(max_turns=50)
@@ -150,49 +155,83 @@ async def websocket_chat(ws: WebSocket):
 
         while True:
             raw = await ws.receive_text()
-            msg = json.loads(raw)
+            try:
+                msg = json.loads(raw)
+            except json.JSONDecodeError:
+                await ws.send_json({"type": "error", "message": "无效的 JSON"})
+                continue
+
             msg_type = msg.get("type", "")
 
+            # --- 心跳 ---
             if msg_type == "ping":
                 await ws.send_json({"type": "pong"})
                 continue
 
+            # --- 用户消息 ---
             if msg_type == "user_message":
-                text = msg.get("text", "")
-                page_context = msg.get("page_context", {})
-                session.add("user", text)
-                async for chunk in agent.stream_reply(text=text, session=session, page_context=page_context):
+                try:
+                    validated = UserMessage(**msg)
+                except Exception as e:
+                    await ws.send_json({"type": "error", "message": f"消息格式错误: {e}"})
+                    continue
+
+                session.add("user", validated.text)
+                page_context = validated.page_context.model_dump() if validated.page_context else {}
+                async for chunk in agent.stream_reply(
+                    text=validated.text, session=session, page_context=page_context,
+                ):
                     await ws.send_json(chunk)
 
+            # --- 页面事件 ---
             elif msg_type == "page_event":
-                event_data = msg.get("event", {})
-                proactive = await agent.analyze_page_event(event_data)
+                try:
+                    validated = PageEventMessage(**msg)
+                except Exception as e:
+                    await ws.send_json({"type": "error", "message": f"事件格式错误: {e}"})
+                    continue
+
+                proactive = await agent.analyze_page_event(validated.event.model_dump())
                 if proactive:
                     await ws.send_json(proactive)
 
+            # --- 反馈 ---
             elif msg_type == "feedback":
-                await agent.record_feedback(msg.get("feedback", {}))
+                try:
+                    validated = FeedbackMessage(**msg)
+                except Exception as e:
+                    await ws.send_json({"type": "error", "message": f"反馈格式错误: {e}"})
+                    continue
 
+                await agent.record_feedback(validated.feedback.model_dump())
+
+            # --- 语音 ---
             elif msg_type == "audio":
-                # 语音数据 → ASR → 文本 → Agent
+                try:
+                    validated = AudioMessage(**msg)
+                except Exception as e:
+                    await ws.send_json({"type": "error", "message": f"音频格式错误: {e}"})
+                    continue
+
                 from voice.asr import asr_service
-                audio_base64 = msg.get("audio", "")
-                asr_result = await asr_service.process_audio(audio_base64)
+                asr_result = await asr_service.process_audio(validated.audio)
 
                 if asr_result["is_wakeword"]:
                     await ws.send_json({"type": "wakeword_detected"})
                 elif asr_result["is_command"]:
                     await ws.send_json({"type": "command_detected", "command": "silence"})
                 elif asr_result["text"]:
-                    # 将识别的文本当作用户消息处理
                     session.add("user", asr_result["text"])
                     async for chunk in agent.stream_reply(text=asr_result["text"], session=session):
                         await ws.send_json(chunk)
 
+            else:
+                await ws.send_json({"type": "error", "message": f"未知消息类型: {msg_type}"})
+
     except WebSocketDisconnect:
         logger.info("WS 连接断开", session_id=session_id)
     except Exception as e:
-        logger.error("WS 异常", session_id=session_id, error=str(e))
+        logger.error("WS 异常", session_id=session_id, error=str(e), exc_info=True)
     finally:
         active_sessions.pop(session_id, None)
 
