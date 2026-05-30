@@ -13,6 +13,30 @@
       "answer": "1. 打开支付宝首页\n2. 点击扫一扫\n3. 对准商家二维码\n4. 输入金额（商家码自动填充）\n5. 确认付款\n6. 输入支付密码或指纹",
       "selectors": ["[data-testid='scan-btn']"],
       "url_pattern": "alipay.com/*"
+    },
+    {
+      "question": "怎么查看账单？",
+      "answer": "1. 打开支付宝首页\n2. 点击我的 → 账单\n3. 查看所有交易记录\n4. 可按时间/类型筛选\n5. 点击单条记录查看详情",
+      "selectors": ["[data-testid='bill-btn']"],
+      "url_pattern": "alipay.com/*"
+    },
+    {
+      "question": "怎么使用花呗？",
+      "answer": "1. 我的 → 花呗\n2. 查看可用额度\n3. 付款时选择花呗支付\n4. 每月 9 号前还款\n5. 可设置自动还款",
+      "selectors": ["[data-testid='huabei']"],
+      "url_pattern": "alipay.com/*"
+    },
+    {
+      "question": "怎么使用生活缴费？",
+      "answer": "1. 首页 → 更多 → 生活缴费\n2. 选择缴费类型（水/电/燃气/话费）\n3. 输入户号或手机号\n4. 查询欠费金额\n5. 确认缴费",
+      "selectors": ["[data-testid='life-payment']"],
+      "url_pattern": "alipay.com/*"
+    },
+    {
+      "question": "怎么设置免密支付？",
+      "answer": "1. 我的 → 设置 → 支付设置\n2. 免密支付/自动扣款\n3. 开启小额免密\n4. 设置免密金额上限\n5. 也可以管理已签约的自动扣款",
+      "selectors": ["[data-testid='auto-pay']"],
+      "url_pattern": "alipay.com/*"
     }
   ]
 }

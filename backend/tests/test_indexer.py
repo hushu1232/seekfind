@@ -121,3 +121,34 @@ class TestDocCrawler:
         html = f"<html><body>{links_html}</body></html>"
         links = DocCrawler._extract_links(html, "example.com")
         assert len(links) <= 50
+
+
+class TestCrawledDoc:
+    """CrawledDoc 数据结构测试。"""
+
+    def test_default_fields(self):
+        """新增字段有默认值（向后兼容）。"""
+        doc = CrawledDoc(url="http://test.com", title="Test", text="Hello")
+        assert doc.depth == 0
+        assert doc.html == ""
+        assert doc.status == 200
+        assert doc.content_type == ""
+        assert doc.fetched_at == 0.0
+        assert doc.fetcher_type == "http"
+
+    def test_all_fields(self):
+        """所有字段可赋值。"""
+        doc = CrawledDoc(
+            url="http://test.com",
+            title="Test",
+            text="Hello",
+            depth=1,
+            html="<html>Hello</html>",
+            status=200,
+            content_type="text/html",
+            fetched_at=1234567890.0,
+            fetcher_type="scrapling_http",
+        )
+        assert doc.html == "<html>Hello</html>"
+        assert doc.status == 200
+        assert doc.fetcher_type == "scrapling_http"

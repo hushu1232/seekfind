@@ -4,14 +4,9 @@
 
 职责：
   - 抓取指定 URL 的网页内容
-  - 使用 trafilatura 从 HTML 中提取正文（去除导航、广告、页脚等噪音）
+  - 使用 ScraplingFetcher 提取正文（支持 JS 渲染 + 反爬）
+  - 降级到 httpx + trafilatura
   - 返回清洗后的纯文本供 Agent 使用
-
-为什么用 trafilatura：
-  - 比 BeautifulSoup 手写规则质量更高
-  - 自动识别正文区域，去除 boilerplate
-  - 支持表格提取
-  - 被 Jina Reader、Firecrawl 等知名项目采用
 
 安全：
   - 超时 30 秒，防止慢速网站阻塞
@@ -25,9 +20,7 @@
 import json
 from dataclasses import dataclass
 
-import httpx
 import structlog
-import trafilatura
 
 logger = structlog.get_logger()
 
@@ -37,10 +30,14 @@ class FetchDocPageTool:
     """
     文档页面抓取工具。
 
+    使用 ScraplingFetcher 进行页面抓取，支持 JS 渲染和反爬。
+    如果 Scrapling 不可用，自动降级到 httpx + trafilatura。
+
     Attributes:
         name: 工具名（Function Calling 时的 function name）
         description: 工具描述
         schema: Function Calling schema
+        _fetcher: ScraplingFetcher 实例
     """
 
     name: str = "fetch_doc_page"
@@ -49,9 +46,10 @@ class FetchDocPageTool:
         "当需要查看具体文档页面、或 search_docs 结果不够详细时调用。"
     )
     schema: dict = None
+    _fetcher: object = None
 
     def __post_init__(self):
-        """初始化 Function Calling schema。"""
+        """初始化 Function Calling schema 和 Fetcher。"""
         self.schema = {
             "name": self.name,
             "description": self.description,
@@ -66,6 +64,10 @@ class FetchDocPageTool:
                 "required": ["url"],
             },
         }
+        # 延迟初始化 Fetcher
+        if self._fetcher is None:
+            from indexer.scrapling_fetcher import ScraplingFetcher
+            self._fetcher = ScraplingFetcher(mode="http")
 
     async def execute(self, url: str) -> str:
         """
@@ -76,51 +78,34 @@ class FetchDocPageTool:
 
         Returns:
             JSON 字符串：
-              成功：{"url": "...", "text": "页面正文..."}
+              成功：{"url": "...", "text": "页面正文...", "status": 200, "fetcher": "scrapling_http"}
               失败：{"error": "错误信息", "url": "..."}
-
-        流程：
-          1. httpx 异步 GET 请求（30 秒超时，跟随重定向）
-          2. trafilatura.extract 提取正文
-          3. 截断超长内容（8000 字符上限）
         """
         try:
-            async with httpx.AsyncClient(
-                timeout=30,
-                follow_redirects=True,
-                headers={"User-Agent": "QiuWen/0.1 (local AI assistant)"},
-            ) as client:
-                resp = await client.get(url)
-                resp.raise_for_status()
-                html = resp.text
+            doc = await self._fetcher.fetch(url)
 
-            # trafilatura 正文提取
-            text = trafilatura.extract(
-                html,
-                include_links=False,   # 不包含链接标记
-                include_tables=True,   # 保留表格内容
+            if not doc.text:
+                logger.warning("未能提取正文", url=url)
+                return json.dumps({
+                    "error": "无法提取正文，页面可能是 SPA 或需要登录",
+                    "url": url,
+                })
+
+            logger.info(
+                "页面抓取成功",
+                url=url,
+                text_len=len(doc.text),
+                status=doc.status,
+                fetcher=doc.fetcher_type,
             )
+            return json.dumps({
+                "url": url,
+                "text": doc.text,
+                "status": doc.status,
+                "fetcher": doc.fetcher_type,
+            }, ensure_ascii=False)
 
-            if not text:
-                logger.warning("trafilatura 未能提取正文", url=url)
-                return json.dumps({"error": "无法提取正文，页面可能是 SPA 或需要登录", "url": url})
-
-            # 截断超长内容（节省 LLM token）
-            truncated = False
-            if len(text) > 8000:
-                text = text[:8000] + "\n...(内容过长已截断)"
-                truncated = True
-
-            logger.info("页面抓取成功", url=url, text_len=len(text), truncated=truncated)
-            return json.dumps({"url": url, "text": text}, ensure_ascii=False)
-
-        except httpx.TimeoutException:
-            logger.error("抓取超时", url=url)
-            return json.dumps({"error": "抓取超时（30秒）", "url": url})
-        except httpx.HTTPStatusError as e:
-            logger.error("HTTP 错误", url=url, status=e.response.status_code)
-            return json.dumps({"error": f"HTTP {e.response.status_code}", "url": url})
-        except httpx.HTTPError as e:
+        except Exception as e:
             logger.error("抓取失败", url=url, error=str(e))
             return json.dumps({"error": f"抓取失败: {str(e)}", "url": url})
 

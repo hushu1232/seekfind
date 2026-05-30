@@ -5,19 +5,61 @@
     {
       "question": "怎么搜索商品？",
       "answer": "1. 打开淘宝首页\n2. 在搜索框输入商品关键词\n3. 点击搜索\n4. 使用筛选器（价格/销量/信用）\n5. 点击商品进入详情页",
-      "selectors": ["#q"],
+      "selectors": [
+        "#q"
+      ],
       "url_pattern": "taobao.com/*"
     },
     {
       "question": "怎么下单购买？",
       "answer": "1. 在商品详情页选择规格（颜色/尺码）\n2. 点击立即购买\n3. 确认收货地址\n4. 选择支付方式\n5. 点击提交订单\n6. 完成支付",
-      "selectors": ["#J_LinkBuy"],
+      "selectors": [
+        "#J_LinkBuy"
+      ],
       "url_pattern": "item.taobao.com/*"
     },
     {
       "question": "怎么查看物流？",
       "answer": "1. 打开我的淘宝\n2. 点击已买到的宝贝\n3. 找到订单，点击查看物流\n4. 可以看到快递公司和物流轨迹\n5. 也可以复制单号到快递100查询",
-      "selectors": ["[data-testid='logistics-link']"],
+      "selectors": [
+        "[data-testid='logistics-link']"
+      ],
+      "url_pattern": "taobao.com/*"
+    },
+    {
+      "question": "怎么搜索商品？",
+      "answer": "1. 在首页搜索框输入关键词\n2. 使用筛选条件（价格/销量/地区等）\n3. 排序方式：综合/价格/销量/信用\n4. 点击商品进入详情页\n5. 查看评价和店铺评分",
+      "selectors": [
+        "[data-testid='search']",
+        "#search-input"
+      ],
+      "url_pattern": "taobao.com/*"
+    },
+    {
+      "question": "怎么使用购物车？",
+      "answer": "1. 在商品页点击加入购物车\n2. 选择规格（颜色/尺码等）\n3. 点击购物车图标查看\n4. 勾选要购买的商品\n5. 点击结算",
+      "selectors": [
+        "[data-testid='cart']",
+        ".cart-btn"
+      ],
+      "url_pattern": "taobao.com/*"
+    },
+    {
+      "question": "怎么申请退款？",
+      "answer": "1. 进入已买到的宝贝\n2. 找到订单点击退款\n3. 选择退款原因\n4. 填写退款说明\n5. 上传凭证后提交申请",
+      "selectors": [
+        "[data-testid='refund']",
+        ".refund-btn"
+      ],
+      "url_pattern": "taobao.com/*"
+    },
+    {
+      "question": "怎么查看物流？",
+      "answer": "1. 进入已买到的宝贝\n2. 找到订单点击查看物流\n3. 查看物流轨迹\n4. 也可以复制运单号到快递公司官网查询",
+      "selectors": [
+        "[data-testid='logistics']",
+        ".logistics-btn"
+      ],
       "url_pattern": "taobao.com/*"
     }
   ]

@@ -5,19 +5,61 @@
     {
       "question": "怎么创建服务器？",
       "answer": "1. 点击左侧边栏底部的 + 号\n2. 选择创建服务器\n3. 选择模板（游戏/学校/社区/自定义）\n4. 输入服务器名称\n5. 上传图标（可选）\n6. 点击创建",
-      "selectors": ["[aria-label='Add a Server']"],
+      "selectors": [
+        "[aria-label='Add a Server']"
+      ],
       "url_pattern": "discord.com/*"
     },
     {
       "question": "怎么创建频道？",
       "answer": "1. 右键点击服务器名称\n2. 选择 Create Channel\n3. 选择类型（文字/语音/公告）\n4. 输入频道名称\n5. 设置权限（可选）\n6. 点击 Create Channel",
-      "selectors": ["[data-list-item-id='channels-create']"],
+      "selectors": [
+        "[data-list-item-id='channels-create']"
+      ],
       "url_pattern": "discord.com/*"
     },
     {
       "question": "怎么加入语音频道？",
       "answer": "1. 在左侧找到语音频道\n2. 点击频道名称即可加入\n3. 加入后可以开关麦克风和耳机\n4. 点击左下角断开图标离开",
-      "selectors": ["[class*='voiceChannel']"],
+      "selectors": [
+        "[class*='voiceChannel']"
+      ],
+      "url_pattern": "discord.com/*"
+    },
+    {
+      "question": "怎么创建服务器？",
+      "answer": "1. 点击左侧 + 号\n2. 选择 Create My Own\n3. 选择服务器类型\n4. 输入服务器名称\n5. 上传图标后点击 Create",
+      "selectors": [
+        "[data-testid='create-server']",
+        ".create-server"
+      ],
+      "url_pattern": "discord.com/*"
+    },
+    {
+      "question": "怎么使用语音频道？",
+      "answer": "1. 点击左侧语音频道名\n2. 自动加入语音通话\n3. 点击屏幕共享可分享画面\n4. 点击摄像头开启视频\n5. 点击电话图标离开",
+      "selectors": [
+        "[data-testid='voice-channel']",
+        ".voice-channel"
+      ],
+      "url_pattern": "discord.com/*"
+    },
+    {
+      "question": "怎么管理服务器角色？",
+      "answer": "1. 服务器设置 → Roles\n2. 创建新角色并设置颜色\n3. 配置权限（管理消息/踢人/管理频道等）\n4. 将角色分配给成员\n5. 角色层级决定权限优先级",
+      "selectors": [
+        "[data-testid='roles-settings']",
+        ".roles"
+      ],
+      "url_pattern": "discord.com/*"
+    },
+    {
+      "question": "怎么使用机器人？",
+      "answer": "1. 访问 bot 列表网站（如 top.gg）\n2. 选择机器人点击 Invite\n3. 选择要添加到的服务器\n4. 授权权限\n5. 机器人自动加入服务器",
+      "selectors": [
+        "[data-testid='add-bot']",
+        ".bot-invite"
+      ],
       "url_pattern": "discord.com/*"
     }
   ]

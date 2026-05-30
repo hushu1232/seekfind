@@ -25,6 +25,18 @@ const store = new StateStore();
 
 let ballState: BallState = "idle";
 
+// 当前活跃的高亮指令（用于页面切换后恢复）
+let activeHighlights: Array<{
+  selector: string;
+  fallback_selector?: string;
+  description: string;
+  order: number;
+  style?: string;
+}> = [];
+
+// 当前活跃的 tab ID
+let activeTabId: number | null = null;
+
 // ---------------------------------------------------------------------------
 // 初始化
 // ---------------------------------------------------------------------------
@@ -50,23 +62,27 @@ function handleServerMessage(msg: ServerMessage): void {
       break;
 
     case "highlight":
+      // 保存高亮指令（用于页面切换后恢复）
+      activeHighlights.push({
+        selector: msg.selector,
+        fallback_selector: msg.fallback_selector,
+        description: msg.description,
+        order: msg.order,
+        style: (msg as any).style,
+      });
+
       // 路由到 Content Script
       chrome.tabs.query({ active: true, currentWindow: true }, (tabs) => {
         if (tabs[0]?.id) {
-          chrome.tabs.sendMessage(tabs[0].id, {
-            type: INTERNAL_MSG.HIGHLIGHT,
-            payload: {
-              selector: msg.selector,
-              fallback_selector: msg.fallback_selector,
-              description: msg.description,
-              order: msg.order,
-            },
-          });
+          activeTabId = tabs[0].id;
+          sendHighlightToTab(tabs[0].id, msg);
         }
       });
       break;
 
     case "agent_thinking":
+      // 新问题开始时清除旧高亮
+      clearHighlights();
       setBallState("thinking");
       break;
 
@@ -78,6 +94,8 @@ function handleServerMessage(msg: ServerMessage): void {
         content: msg.text,
         timestamp: Date.now(),
       });
+      // 不清除高亮 — 用户可能还需要看指引
+      // 高亮会在用户发起新问题时自动替换
       break;
   }
 }
@@ -96,6 +114,29 @@ function setBallState(state: BallState): void {
 // ---------------------------------------------------------------------------
 function broadcastToSidebar(msg: any): void {
   chrome.runtime.sendMessage(msg).catch(() => {});
+}
+
+/** 发送高亮指令到指定 tab */
+function sendHighlightToTab(tabId: number, highlight: any): void {
+  chrome.tabs.sendMessage(tabId, {
+    type: INTERNAL_MSG.HIGHLIGHT,
+    payload: {
+      selector: highlight.selector,
+      fallback_selector: highlight.fallback_selector,
+      description: highlight.description,
+      order: highlight.order,
+      style: highlight.style,
+    },
+  }).catch(() => {});
+}
+
+/** 恢复高亮到新页面 */
+function restoreHighlights(tabId: number): void {
+  if (activeHighlights.length === 0) return;
+  console.log(`[求问] 恢复 ${activeHighlights.length} 个高亮到 tab ${tabId}`);
+  for (const h of activeHighlights) {
+    sendHighlightToTab(tabId, h);
+  }
 }
 
 chrome.runtime.onMessage.addListener((msg, sender, sendResponse) => {
@@ -152,5 +193,38 @@ chrome.runtime.onInstalled.addListener((details) => {
   ballState = await store.getBallState();
   wsManager.connect();
 })();
+
+// ---------------------------------------------------------------------------
+// 页面切换常驻：监听导航事件，恢复高亮
+// ---------------------------------------------------------------------------
+
+// 页面加载完成时恢复高亮
+chrome.webNavigation?.onCompleted?.addListener((details) => {
+  if (details.frameId !== 0) return; // 只处理主框架
+  if (activeHighlights.length > 0) {
+    // 延迟一点等待 Content Script 加载
+    setTimeout(() => restoreHighlights(details.tabId), 500);
+  }
+});
+
+// 标签页切换时恢复高亮
+chrome.tabs?.onActivated?.addListener((activeInfo) => {
+  activeTabId = activeInfo.tabId;
+  if (activeHighlights.length > 0) {
+    setTimeout(() => restoreHighlights(activeInfo.tabId), 300);
+  }
+});
+
+// 页面开始导航时清除旧高亮（新页面内容不同）
+chrome.webNavigation?.onBeforeNavigate?.addListener((details) => {
+  if (details.frameId !== 0) return;
+  // 如果是同域导航，保留高亮；跨域则清除
+  // 简化处理：保留所有高亮，让 Content Script 自行处理失效的 selector
+});
+
+// Agent 回复完成时清除高亮缓存
+function clearHighlights(): void {
+  activeHighlights = [];
+}
 
 export {};

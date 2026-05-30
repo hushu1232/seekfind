@@ -94,3 +94,11 @@ def tmp_knowledge_dir(tmp_path, sample_builtin_json):
         encoding="utf-8",
     )
     return str(knowledge_dir)
+
+
+@pytest.fixture
+def fingerprint_storage(tmp_path):
+    """创建临时指纹存储（不污染生产数据库）。"""
+    from memory.fingerprint_storage import FingerprintStorage
+    db_path = str(tmp_path / "test_fingerprints.db")
+    return FingerprintStorage(db_path)

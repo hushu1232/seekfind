@@ -13,6 +13,30 @@
       "answer": "1. 创建设计后，左侧面板显示模板\n2. 搜索关键词找到合适模板\n3. 点击模板应用到画布\n4. 修改文字、图片、颜色\n5. 自动保存",
       "selectors": ["[data-testid='templates-tab']"],
       "url_pattern": "canva.com/*"
+    },
+    {
+      "question": "怎么添加动画效果？",
+      "answer": "1. 选中元素\n2. 点击上方 Animate 按钮\n3. 选择动画类型（Fade/Pop/Rise 等）\n4. 调整动画时长和方向\n5. 可以为页面切换设置过渡动画",
+      "selectors": ["[data-testid='animate']"],
+      "url_pattern": "canva.com/*"
+    },
+    {
+      "question": "怎么协作编辑？",
+      "answer": "1. 点击右上角 Share\n2. 输入协作者邮箱\n3. 设置权限（Can view/Can edit）\n4. 复制链接分享\n5. 多人可同时编辑同一设计",
+      "selectors": ["[data-testid='share-button']"],
+      "url_pattern": "canva.com/*"
+    },
+    {
+      "question": "怎么使用品牌套件？",
+      "answer": "1. 左侧 Brand Kit 标签\n2. 上传品牌 Logo\n3. 设置品牌颜色\n4. 设置品牌字体\n5. 创建设计时可一键应用品牌样式",
+      "selectors": ["[data-testid='brand-kit']"],
+      "url_pattern": "canva.com/*"
+    },
+    {
+      "question": "怎么创建演示文稿？",
+      "answer": "1. 点击 Create a design → Presentation\n2. 选择模板或空白\n3. 添加幻灯片\n4. 使用左侧模板快速设计每页\n5. 点击 Present 播放\n6. 可导出为 PDF 或 PPTX",
+      "selectors": ["[data-testid='presentation']"],
+      "url_pattern": "canva.com/*"
     }
   ]
 }

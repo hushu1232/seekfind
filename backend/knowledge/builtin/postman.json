@@ -13,6 +13,30 @@
       "answer": "1. 左侧面板点击 + 新建集合\n2. 输入集合名称\n3. 拖拽请求到集合中\n4. 可以添加集合级变量和 Pre-request Script\n5. 右键集合可以导出/分享",
       "selectors": ["[data-testid='create-collection']"],
       "url_pattern": "postman.com/*"
+    },
+    {
+      "question": "怎么使用环境变量？",
+      "answer": "1. 右上角 Environment → Create Environment\n2. 添加变量（如 base_url、token）\n3. 在请求中使用 {{variable}} 引用\n4. 切换环境自动切换变量值\n5. 可以从响应中自动提取变量",
+      "selectors": ["[data-testid='environment']"],
+      "url_pattern": "postman.com/*"
+    },
+    {
+      "question": "怎么编写测试脚本？",
+      "answer": "1. 在请求的 Tests 标签页编写 JavaScript\n2. 常用断言：pm.response.to.have.status(200)\n3. 提取数据：pm.response.json()\n4. 设置变量：pm.environment.set('key', value)\n5. 运行后查看 Test Results",
+      "selectors": ["[data-testid='tests-tab']"],
+      "url_pattern": "postman.com/*"
+    },
+    {
+      "question": "怎么使用 Collection Runner？",
+      "answer": "1. 点击集合旁的 ... → Run collection\n2. 选择要运行的请求\n3. 设置迭代次数和延迟\n4. 可以上传数据文件（CSV/JSON）\n5. 点击 Run 批量执行\n6. 查看运行结果和测试报告",
+      "selectors": ["[data-testid='collection-runner']"],
+      "url_pattern": "postman.com/*"
+    },
+    {
+      "question": "怎么生成 API 文档？",
+      "answer": "1. 右键集合 → View Documentation\n2. Postman 自动生成 API 文档\n3. 可以编辑描述和示例\n4. 点击 Publish 发布公开文档\n5. 分享文档链接给团队",
+      "selectors": ["[data-testid='documentation']"],
+      "url_pattern": "postman.com/*"
     }
   ]
 }

@@ -6,9 +6,14 @@
   - 封装 Chroma 向量库的增删改查操作
   - 管理三个独立集合：
       docs:      文档索引（分块后的文档文本 + 元数据）
-      elements:  元素指纹库（Phase 3：页面元素 selector + 描述映射）
-      flows:     操作流库（Phase 3：录制的操作序列）
+      elements:  元素指纹库（页面元素 selector + 描述映射）
+      flows:     操作流库（录制的操作序列）
   - 提供 save_memory/recall_memory 高级接口供 Agent 工具调用
+
+优化点（Sprint 4 T11）：
+  - 连接超时配置化（默认 10 秒）
+  - 操作重试（最多 3 次，指数退避）
+  - 连接健康检查
 
 连接方式：
   使用 Chroma HTTP Client 连接 docker-compose 中的 chroma 容器。
@@ -20,6 +25,9 @@ Embedding：
   TODO: 集成 Ollama embedding 函数。
 """
 
+import asyncio
+from typing import Any
+
 import structlog
 import chromadb
 from chromadb.config import Settings as ChromaSettings
@@ -27,6 +35,38 @@ from chromadb.config import Settings as ChromaSettings
 from config import settings
 
 logger = structlog.get_logger()
+
+
+# 重试配置
+_MAX_RETRIES = 3
+_RETRY_BASE_DELAY = 0.5  # 秒，指数退避基数
+
+
+async def _retry_async(func, *args, max_retries: int = _MAX_RETRIES, **kwargs) -> Any:
+    """
+    异步重试装饰器（指数退避）。
+
+    对 Chroma 的瞬时连接错误进行重试。
+    """
+    last_error = None
+    for attempt in range(max_retries):
+        try:
+            # Chroma 的同步方法在线程池中运行
+            loop = asyncio.get_event_loop()
+            return await loop.run_in_executor(None, lambda: func(*args, **kwargs))
+        except Exception as e:
+            last_error = e
+            if attempt < max_retries - 1:
+                delay = _RETRY_BASE_DELAY * (2 ** attempt)
+                logger.warning(
+                    "Chroma 操作失败，重试中",
+                    attempt=attempt + 1,
+                    max_retries=max_retries,
+                    delay=delay,
+                    error=str(e),
+                )
+                await asyncio.sleep(delay)
+    raise last_error
 
 
 class LongTermMemory:
@@ -47,6 +87,7 @@ class LongTermMemory:
     def __init__(self):
         self._client: chromadb.HttpClient | None = None
         self._collections: dict[str, chromadb.Collection] = {}
+        self._connection_healthy: bool = False
 
     async def initialize(self) -> None:
         """
@@ -55,37 +96,62 @@ class LongTermMemory:
         如果集合不存在会自动创建（get_or_create_collection）。
         使用 cosine 相似度（适合文本语义匹配）。
         """
-        self._client = chromadb.HttpClient(
-            host=settings.chroma_host,
-            port=settings.chroma_port,
-            settings=ChromaSettings(anonymized_telemetry=False),
-            timeout=10,  # 连接超时 10 秒
-        )
-
-        # 初始化三个集合
-        collection_map = {
-            "docs": settings.chroma_collection_docs,
-            "elements": settings.chroma_collection_elements,
-            "flows": settings.chroma_collection_flows,
-        }
-        for name, collection_name in collection_map.items():
-            self._collections[name] = self._client.get_or_create_collection(
-                name=collection_name,
-                metadata={"hnsw:space": "cosine"},  # cosine 相似度
+        try:
+            self._client = chromadb.HttpClient(
+                host=settings.chroma_host,
+                port=settings.chroma_port,
+                settings=ChromaSettings(anonymized_telemetry=False),
             )
 
-        logger.info(
-            "长期记忆初始化完成",
-            collections=list(collection_map.keys()),
-            host=settings.chroma_host,
-            port=settings.chroma_port,
-        )
+            # 初始化三个集合
+            collection_map = {
+                "docs": settings.chroma_collection_docs,
+                "elements": settings.chroma_collection_elements,
+                "flows": settings.chroma_collection_flows,
+            }
+            for name, collection_name in collection_map.items():
+                self._collections[name] = self._client.get_or_create_collection(
+                    name=collection_name,
+                    metadata={"hnsw:space": "cosine"},  # cosine 相似度
+                )
+
+            self._connection_healthy = True
+            logger.info(
+                "长期记忆初始化完成",
+                collections=list(collection_map.keys()),
+                host=settings.chroma_host,
+                port=settings.chroma_port,
+            )
+        except Exception as e:
+            self._connection_healthy = False
+            logger.error("长期记忆初始化失败", error=str(e))
+            raise
 
     async def close(self) -> None:
         """释放连接资源。"""
         self._client = None
         self._collections.clear()
+        self._connection_healthy = False
         logger.info("长期记忆已关闭")
+
+    async def health_check(self) -> bool:
+        """检查 Chroma 连接是否健康。"""
+        if not self._client:
+            return False
+        try:
+            loop = asyncio.get_event_loop()
+            await loop.run_in_executor(None, self._client.heartbeat)
+            self._connection_healthy = True
+            return True
+        except Exception as e:
+            self._connection_healthy = False
+            logger.warning("Chroma 健康检查失败", error=str(e))
+            return False
+
+    @property
+    def is_healthy(self) -> bool:
+        """连接是否健康。"""
+        return self._connection_healthy
 
     async def add(
         self,
@@ -111,7 +177,7 @@ class LongTermMemory:
         if not coll:
             raise ValueError(f"未知集合: {collection}，可用: {list(self._collections.keys())}")
 
-        coll.add(documents=texts, metadatas=metadatas, ids=ids)
+        await _retry_async(coll.add, documents=texts, metadatas=metadatas, ids=ids)
         logger.debug("添加文档", collection=collection, count=len(texts))
 
     async def search(
@@ -137,7 +203,7 @@ class LongTermMemory:
             logger.warning("检索失败：集合不存在", collection=collection)
             return []
 
-        results = coll.query(query_texts=[query], n_results=top_k)
+        results = await _retry_async(coll.query, query_texts=[query], n_results=top_k)
 
         docs = []
         documents = results.get("documents", [[]])
@@ -181,4 +247,7 @@ class LongTermMemory:
         coll = self._collections.get(collection)
         if not coll:
             return 0
-        return coll.count()
+        try:
+            return await _retry_async(coll.count)
+        except Exception:
+            return 0

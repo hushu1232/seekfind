@@ -33,6 +33,9 @@ COPY . .
 # --- 内置常识库 ---
 COPY knowledge/ /app/knowledge/
 
+# --- 数据目录（指纹存储等） ---
+RUN mkdir -p /app/data
+
 # --- 启动入口 ---
 COPY entrypoint.sh /entrypoint.sh
 RUN chmod +x /entrypoint.sh

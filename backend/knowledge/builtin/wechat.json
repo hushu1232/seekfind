@@ -5,19 +5,61 @@
     {
       "question": "怎么发送文件？",
       "answer": "1. 打开聊天窗口\n2. 点击右下角 + 号\n3. 选择文件\n4. 选择要发送的文件\n5. 点击发送\n6. 注意：单个文件不能超过 100MB",
-      "selectors": ["[aria-label='发送文件']"],
+      "selectors": [
+        "[aria-label='发送文件']"
+      ],
       "url_pattern": ""
     },
     {
       "question": "怎么创建群聊？",
       "answer": "1. 点击右上角 +\n2. 选择发起群聊\n3. 选择群成员（至少 2 人）\n4. 点击确定\n5. 群创建后可以修改群名、设置群公告",
-      "selectors": ["[aria-label='发起群聊']"],
+      "selectors": [
+        "[aria-label='发起群聊']"
+      ],
       "url_pattern": ""
     },
     {
       "question": "怎么使用小程序？",
       "answer": "1. 下拉首页打开小程序列表\n2. 或在搜索框搜索小程序名称\n3. 点击进入小程序\n4. 使用后自动保留在列表中\n5. 长按可以删除/置顶",
-      "selectors": ["[aria-label='搜索']"],
+      "selectors": [
+        "[aria-label='搜索']"
+      ],
+      "url_pattern": ""
+    },
+    {
+      "question": "怎么发送文件？",
+      "answer": "1. 打开聊天窗口\n2. 点击 + 号选择文件\n3. 选择要发送的文件\n4. 点击发送\n5. 也支持直接拖拽文件到聊天窗口",
+      "selectors": [
+        "[data-testid='file']",
+        ".file-btn"
+      ],
+      "url_pattern": ""
+    },
+    {
+      "question": "怎么创建群聊？",
+      "answer": "1. 点击右上角 +\n2. 选择发起群聊\n3. 选择联系人（至少 2 人）\n4. 点击确定\n5. 可以设置群名称和群公告",
+      "selectors": [
+        "[data-testid='create-group']",
+        ".group-create"
+      ],
+      "url_pattern": ""
+    },
+    {
+      "question": "怎么使用小程序？",
+      "answer": "1. 在首页下拉查看最近使用的小程序\n2. 或在搜索框搜索小程序名称\n3. 点击进入小程序\n4. 小程序无需安装即可使用\n5. 长按小程序可添加到我的小程序",
+      "selectors": [
+        "[data-testid='mini-program']",
+        ".miniapp"
+      ],
+      "url_pattern": ""
+    },
+    {
+      "question": "怎么设置朋友圈权限？",
+      "answer": "1. 我 → 设置 → 朋友权限\n2. 朋友圈 → 不让他看或不看他\n3. 添加要屏蔽的联系人\n4. 也可以设置朋友圈可见范围（最近三天/半年/全部）",
+      "selectors": [
+        "[data-testid='moments']",
+        ".moments-settings"
+      ],
       "url_pattern": ""
     }
   ]

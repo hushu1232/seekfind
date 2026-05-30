@@ -5,19 +5,65 @@
     {
       "question": "怎么创建新项目？",
       "answer": "1. 打开 Figma，点击 New design file\n2. 选择画板尺寸（如 iPhone 14 / Desktop）\n3. 使用左侧工具栏创建设计元素\n4. 使用右侧面板调整属性\n5. Ctrl+S 保存，自动云端同步",
-      "selectors": ["[data-testid='new-file-btn']"],
+      "selectors": [
+        "[data-testid='new-file-btn']"
+      ],
       "url_pattern": "figma.com/*"
     },
     {
       "question": "怎么创建组件？",
       "answer": "1. 选中要转换为组件的元素\n2. 右键选择 Create component（或 Ctrl+Alt+K）\n3. 组件会出现在 Assets 面板中\n4. 拖拽组件到画板创建实例\n5. 修改主组件，所有实例自动更新",
-      "selectors": ["[data-testid='create-component']"],
+      "selectors": [
+        "[data-testid='create-component']"
+      ],
       "url_pattern": "figma.com/*"
     },
     {
       "question": "怎么与开发协作？",
       "answer": "1. 点右上角 Share 按钮\n2. 设置权限（Can view/Can edit）\n3. 复制链接发给开发\n4. 开发可以用 Dev Mode 查看 CSS/代码\n5. 开发可以直接复制样式代码",
-      "selectors": ["[data-testid='share-button']"],
+      "selectors": [
+        "[data-testid='share-button']"
+      ],
+      "url_pattern": "figma.com/*"
+    },
+    {
+      "question": "怎么使用 Auto Layout？",
+      "answer": "1. 选中元素，按 Shift+A 添加 Auto Layout\n2. 设置方向（水平/垂直）\n3. 设置间距（Gap）\n4. 设置内边距（Padding）\n5. 设置对齐方式\n6. 子元素会自动排列和调整大小",
+      "selectors": [
+        "[data-testid='auto-layout']"
+      ],
+      "url_pattern": "figma.com/*"
+    },
+    {
+      "question": "怎么创建组件变体？",
+      "answer": "1. 选中组件，点击右侧面板 + 按钮添加变体\n2. 设置变体属性（如 State: Default/Hover/Pressed）\n3. 为每个变体调整设计\n4. 使用时在右侧面板切换变体属性\n5. 可以创建多个属性组合",
+      "selectors": [
+        "[data-testid='variants']"
+      ],
+      "url_pattern": "figma.com/*"
+    },
+    {
+      "question": "怎么使用原型交互？",
+      "answer": "1. 切换到 Prototype 标签\n2. 选中元素，拖拽箭头到目标画板\n3. 设置触发方式（Click/Hover/Drag 等）\n4. 设置动画类型（Instant/Dissolve/Slide 等）\n5. 设置动画时长和缓动曲线\n6. 点击右上角播放原型",
+      "selectors": [
+        "[data-testid='prototype-tab']"
+      ],
+      "url_pattern": "figma.com/*"
+    },
+    {
+      "question": "怎么使用 Dev Mode？",
+      "answer": "1. 点击右上角图标切换到 Dev Mode\n2. 选中设计元素查看 CSS/Android/iOS 代码\n3. 点击 Copy 复制代码\n4. 查看间距、颜色、字体等设计参数\n5. 导出资产（SVG/PNG/JSON）",
+      "selectors": [
+        "[data-testid='dev-mode']"
+      ],
+      "url_pattern": "figma.com/*"
+    },
+    {
+      "question": "怎么使用设计系统库？",
+      "answer": "1. 创建独立的 Library 文件（包含组件/样式/变量）\n2. 在团队设置中发布库\n3. 其他文件通过 Assets > Libraries 引用库\n4. 更新库后，所有引用文件收到更新通知\n5. 可以接受或跳过更新",
+      "selectors": [
+        "[data-testid='libraries']"
+      ],
       "url_pattern": "figma.com/*"
     }
   ]

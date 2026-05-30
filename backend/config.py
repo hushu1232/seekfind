@@ -76,6 +76,7 @@ class Settings(BaseSettings):
     # --- Chroma 向量库 ---------------------------------------------------
     chroma_host: str = "chroma"   # docker-compose 服务名
     chroma_port: int = 8000
+    chroma_timeout: int = 10      # 连接超时（秒）
     chroma_collection_docs: str = "qiuwen_docs"       # 文档集合
     chroma_collection_elements: str = "qiuwen_elements"  # 元素指纹集合（Phase 3）
     chroma_collection_flows: str = "qiuwen_flows"     # 操作流集合（Phase 3）

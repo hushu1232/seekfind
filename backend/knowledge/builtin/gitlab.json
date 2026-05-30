@@ -19,6 +19,36 @@
       "answer": "1. 打开目标项目页面\n2. 点击右上角 Fork 按钮\n3. 选择命名空间（个人或组）\n4. 等待 Fork 完成",
       "selectors": ["[data-testid='fork-button']"],
       "url_pattern": "gitlab.com/*"
+    },
+    {
+      "question": "怎么配置 GitLab Runner？",
+      "answer": "1. 安装 GitLab Runner：curl -L https://packages.gitlab.com/install/repositories/runner/gitlab-runner/script.deb.sh | sudo bash\n2. 注册 Runner：gitlab-runner register\n3. 输入 GitLab URL 和 Registration Token\n4. 选择 Executor（shell/docker/k8s）\n5. 在 Settings > CI/CD > Runners 查看状态",
+      "selectors": ["[data-testid='runners-settings']"],
+      "url_pattern": "gitlab.com/*"
+    },
+    {
+      "question": "怎么使用 Package Registry？",
+      "answer": "1. 在项目 Settings > Packages & Registries 启用\n2. 配置包管理器（npm/pip/maven 等）\n3. 设置认证 Token\n4. 发布包：npm publish / twine upload\n5. 在项目 Packages 页面管理已发布的包",
+      "selectors": ["[data-testid='packages']"],
+      "url_pattern": "gitlab.com/*/-/packages*"
+    },
+    {
+      "question": "怎么创建 Issue Board？",
+      "answer": "1. 进入项目 Issues > Boards\n2. 点击 Create new board\n3. 添加列（Label/Milestone/Assignee）\n4. 拖拽 Issue 卡片到不同列\n5. 配置过滤条件筛选显示的 Issue",
+      "selectors": ["[data-testid='issue-board']"],
+      "url_pattern": "gitlab.com/*/-/boards*"
+    },
+    {
+      "question": "怎么配置 Protected Branches？",
+      "answer": "1. 进入 Settings > Repository > Protected branches\n2. 选择要保护的分支（如 main）\n3. 设置 Allowed to merge（谁可以合并）\n4. 设置 Allowed to push（谁可以推送）\n5. 可选：要求 Pipeline 成功才能合并",
+      "selectors": ["[data-testid='protected-branches']"],
+      "url_pattern": "gitlab.com/*/-/settings/repository*"
+    },
+    {
+      "question": "怎么使用 GitLab Wiki？",
+      "answer": "1. 进入项目 Wiki 页面\n2. 点击 Create your first page\n3. 输入标题和内容（支持 Markdown）\n4. 选择 Wiki 的 Home page\n5. 创建子页面组织文档结构\n6. 可以克隆 Wiki 仓库本地编辑",
+      "selectors": ["[data-testid='wiki']"],
+      "url_pattern": "gitlab.com/*/-/wikis*"
     }
   ]
 }

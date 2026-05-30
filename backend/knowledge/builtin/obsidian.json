@@ -5,13 +5,50 @@
     {
       "question": "怎么创建笔记？",
       "answer": "1. 点击左侧文件面板的 + 新建笔记按钮\n2. 输入笔记标题（即文件名）\n3. 使用 Markdown 语法编写\n4. 支持 [[双向链接]] 链接其他笔记\n5. 自动保存到 Vault 文件夹",
-      "selectors": ["[aria-label='New note']"],
+      "selectors": [
+        "[aria-label='New note']"
+      ],
       "url_pattern": ""
     },
     {
       "question": "怎么安装插件？",
       "answer": "1. 打开 Settings → Community plugins\n2. 关闭 Safe mode（首次需要）\n3. 点击 Browse\n4. 搜索插件名称\n5. 点击 Install → Enable\n6. 在插件设置中配置",
-      "selectors": ["[aria-label='Community plugins']"],
+      "selectors": [
+        "[aria-label='Community plugins']"
+      ],
+      "url_pattern": ""
+    },
+    {
+      "question": "怎么创建笔记？",
+      "answer": "1. 点击左侧文件图标\n2. 点击 + 创建新笔记\n3. 输入笔记标题\n4. 使用 Markdown 编写内容\n5. 笔记自动保存到 Vault 文件夹",
+      "selectors": [
+        "[data-testid='new-note']",
+        ".new-file"
+      ],
+      "url_pattern": ""
+    },
+    {
+      "question": "怎么使用双向链接？",
+      "answer": "1. 输入 [[ 触发链接建议\n2. 选择要链接的笔记\n3. 或输入新名称创建新笔记\n4. 在被链接笔记中查看反向链接\n5. 使用 Graph View 查看链接关系图",
+      "selectors": [
+        "[data-testid='link']"
+      ],
+      "url_pattern": ""
+    },
+    {
+      "question": "怎么安装社区插件？",
+      "answer": "1. Settings → Community plugins\n2. 点击 Browse 搜索插件\n3. 点击 Install 安装\n4. 启用插件\n5. 在插件设置中配置",
+      "selectors": [
+        "[data-testid='community-plugins']"
+      ],
+      "url_pattern": ""
+    },
+    {
+      "question": "怎么使用模板？",
+      "answer": "1. Settings → Core plugins → Templates 启用\n2. 创建模板笔记\n3. 设置模板文件夹路径\n4. 在笔记中点击插入模板\n5. 支持日期变量 {{date}}",
+      "selectors": [
+        "[data-testid='templates']"
+      ],
       "url_pattern": ""
     }
   ]

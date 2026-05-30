@@ -5,13 +5,52 @@
     {
       "question": "怎么创建 Issue？",
       "answer": "1. 按 C 键快速创建 Issue\n2. 输入标题\n3. 选择项目、优先级、标签\n4. 指派负责人\n5. 按 Enter 保存",
-      "selectors": ["[data-testid='create-issue-button']"],
+      "selectors": [
+        "[data-testid='create-issue-button']"
+      ],
       "url_pattern": "linear.app/*"
     },
     {
       "question": "怎么看 Cycle？",
       "answer": "1. 点击左侧 Cycles\n2. 查看当前 Cycle 的进度\n3. 燃尽图显示完成趋势\n4. 可以将 Issue 拖入/拖出 Cycle",
-      "selectors": ["[data-testid='cycles-link']"],
+      "selectors": [
+        "[data-testid='cycles-link']"
+      ],
+      "url_pattern": "linear.app/*"
+    },
+    {
+      "question": "怎么创建 Issue？",
+      "answer": "1. 按 C 键快速创建\n2. 输入标题和描述\n3. 设置优先级\n4. 指派负责人\n5. 添加到 Cycle\n6. 按 Enter 保存",
+      "selectors": [
+        "[data-testid='create-issue']",
+        ".issue-create"
+      ],
+      "url_pattern": "linear.app/*"
+    },
+    {
+      "question": "怎么使用 Cycle？",
+      "answer": "1. 左侧边栏 Cycles\n2. 创建新 Cycle（通常 2 周）\n3. 将 Issue 拖入 Cycle\n4. 查看 Cycle 进度\n5. Cycle 结束时查看完成情况",
+      "selectors": [
+        "[data-testid='cycles']",
+        ".cycle-view"
+      ],
+      "url_pattern": "linear.app/*"
+    },
+    {
+      "question": "怎么创建 Project？",
+      "answer": "1. 左侧边栏 Projects 点击 +\n2. 输入项目名称和描述\n3. 设置项目状态\n4. 添加成员\n5. 将 Issue 关联到项目",
+      "selectors": [
+        "[data-testid='projects']",
+        ".project-view"
+      ],
+      "url_pattern": "linear.app/*"
+    },
+    {
+      "question": "怎么使用快捷键？",
+      "answer": "1. C = 创建 Issue\n2. G then I = 跳转到 Inbox\n3. G then M = 跳转到 My Issues\n4. Ctrl+K = 命令面板\n5. ? = 查看所有快捷键",
+      "selectors": [
+        "[data-testid='shortcuts']"
+      ],
       "url_pattern": "linear.app/*"
     }
   ]

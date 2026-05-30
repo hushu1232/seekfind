@@ -5,20 +5,62 @@
     {
       "question": "怎么创建群聊？",
       "answer": "1. 打开钉钉，点击右上角 +\n2. 选择 发起群聊\n3. 选择群成员\n4. 设置群名称\n5. 点击确定创建",
-      "selectors": ["[data-testid='create-group']"],
+      "selectors": [
+        "[data-testid='create-group']"
+      ],
       "url_pattern": "*.dingtalk.com/*"
     },
     {
       "question": "怎么提交审批？",
       "answer": "1. 打开钉钉，点击底部 工作台\n2. 找到 审批 应用\n3. 选择审批类型（请假/报销/出差等）\n4. 填写表单信息\n5. 选择审批人\n6. 点击提交",
-      "selectors": ["[data-testid='approval-submit']"],
+      "selectors": [
+        "[data-testid='approval-submit']"
+      ],
       "url_pattern": "*.dingtalk.com/*"
     },
     {
       "question": "怎么查看考勤打卡？",
       "answer": "1. 打开钉钉，点击底部 工作台\n2. 找到 考勤打卡 应用\n3. 查看今日打卡状态\n4. 点击 打卡 按钮进行打卡\n5. 可以查看历史打卡记录",
-      "selectors": ["[data-testid='attendance-clock']"],
+      "selectors": [
+        "[data-testid='attendance-clock']"
+      ],
       "url_pattern": "*.dingtalk.com/*"
+    },
+    {
+      "question": "怎么创建日程？",
+      "answer": "1. 打开钉钉日历\n2. 点击 + 创建日程\n3. 设置标题/时间/参与人\n4. 可选：添加会议室/设置提醒\n5. 点击保存",
+      "selectors": [
+        "[data-testid='create-schedule']",
+        ".schedule-btn"
+      ],
+      "url_pattern": "dingtalk.com/*"
+    },
+    {
+      "question": "怎么使用 OA 审批？",
+      "answer": "1. 工作台 → OA 审批\n2. 选择审批类型\n3. 填写表单\n4. 选择审批人\n5. 提交",
+      "selectors": [
+        "[data-testid='oa-approval']",
+        ".approval-btn"
+      ],
+      "url_pattern": "dingtalk.com/*"
+    },
+    {
+      "question": "怎么使用钉钉文档？",
+      "answer": "1. 工作台 → 钉钉文档\n2. 新建文档/表格/脑图\n3. 支持多人实时协作\n4. 设置文档权限\n5. 可以在聊天中直接创建文档",
+      "selectors": [
+        "[data-testid='dingtalk-doc']",
+        ".doc-btn"
+      ],
+      "url_pattern": "dingtalk.com/*"
+    },
+    {
+      "question": "怎么创建智能群？",
+      "answer": "1. 创建群聊 → 智能群\n2. 设置群名称\n3. 配置入群规则\n4. 设置群机器人\n5. 配置群公告和群文件",
+      "selectors": [
+        "[data-testid='create-group']",
+        ".group-btn"
+      ],
+      "url_pattern": "dingtalk.com/*"
     }
   ]
 }

@@ -5,16 +5,19 @@
   "type": "module",
   "scripts": {
     "dev": "vite",
-    "build": "tsc && vite build",
+    "build": "tsc && vite build && node scripts/build.js chrome",
+    "build:chrome": "tsc && vite build && node scripts/build.js chrome",
+    "build:firefox": "tsc && vite build && node scripts/build.js firefox",
     "preview": "vite preview"
   },
   "dependencies": {
     "three": "^0.173.0"
   },
   "devDependencies": {
-    "typescript": "^5.7.0",
-    "vite": "^6.0.0",
     "@types/chrome": "^0.0.280",
-    "@types/three": "^0.173.0"
+    "@types/node": "^25.9.1",
+    "@types/three": "^0.173.0",
+    "typescript": "^5.7.0",
+    "vite": "^6.0.0"
   }
 }

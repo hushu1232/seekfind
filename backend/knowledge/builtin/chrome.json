@@ -4,27 +4,68 @@
   "entries": [
     {
       "question": "怎么清除浏览器缓存？",
-      "answer": "1. 按 Ctrl+Shift+Delete 打开清除数据面板\n2. 选择时间范围（建议选"所有时间"）\n3. 勾选 Cookie 和缓存的图片和文件\n4. 点击清除数据\n5. 或者：设置 → 隐私与安全 → 清除浏览数据",
-      "selectors": ["#clearBrowsingDataButton"],
+      "answer": "1. 按 Ctrl+Shift+Delete 打开清除数据面板\n2. 选择时间范围（建议选所有时间）\n3. 勾选 Cookie 和缓存的图片和文件\n4. 点击清除数据\n5. 或者：设置 -> 隐私与安全 -> 清除浏览数据",
+      "selectors": [
+        "#clearBrowsingDataButton"
+      ],
       "url_pattern": "chrome://settings/*"
     },
     {
       "question": "怎么安装浏览器扩展？",
       "answer": "1. 打开 Chrome 网上应用店（chrome.google.com/webstore）\n2. 搜索目标扩展\n3. 点击 添加到 Chrome\n4. 确认权限后点击 添加扩展程序\n5. 扩展图标会出现在工具栏",
-      "selectors": ["[aria-label='Add to Chrome']"],
+      "selectors": [
+        "[aria-label='Add to Chrome']"
+      ],
       "url_pattern": "chrome.google.com/webstore*"
     },
     {
       "question": "怎么打开开发者工具？",
-      "answer": "1. 按 F12 或 Ctrl+Shift+I\n2. 或者右键页面 → 检查\n3. 开发者工具包含：Elements（DOM）、Console（日志）、Network（请求）、Sources（源码）\n4. 可以在 Console 中执行 JavaScript",
-      "selectors": [],
+      "answer": "1. 按 F12 或 Ctrl+Shift+I\n2. 或者右键页面选择检查\n3. 开发者工具包含：Elements（DOM）、Console（日志）、Network（请求）、Sources（源码）\n4. 可以在 Console 中执行 JavaScript",
+      "selectors": [
+        "[data-testid='devtools']",
+        ".devtools-link"
+      ],
       "url_pattern": ""
     },
     {
       "question": "怎么管理扩展权限？",
       "answer": "1. 地址栏输入 chrome://extensions\n2. 找到目标扩展，点击详情\n3. 可以设置：在所有网站上允许 / 在特定网站上允许\n4. 也可以在这里关闭或删除扩展",
-      "selectors": ["#extensionDetails"],
+      "selectors": [
+        "#extensionDetails"
+      ],
       "url_pattern": "chrome://extensions/*"
+    },
+    {
+      "question": "怎么使用书签管理？",
+      "answer": "1. 按 Ctrl+D 添加当前页面到书签\n2. 按 Ctrl+Shift+O 打开书签管理器\n3. 创建文件夹整理书签\n4. 拖拽书签调整顺序\n5. 右键书签可编辑/删除/复制链接",
+      "selectors": [
+        "#bookmarkManager"
+      ],
+      "url_pattern": "chrome://bookmarks/*"
+    },
+    {
+      "question": "怎么使用隐身模式？",
+      "answer": "1. 按 Ctrl+Shift+N 打开隐身窗口\n2. 隐身模式下不保存浏览记录、Cookie、表单数据\n3. 下载的文件仍会保留\n4. 关闭隐身窗口后所有数据自动清除",
+      "selectors": [
+        "[data-testid='incognito']"
+      ],
+      "url_pattern": ""
+    },
+    {
+      "question": "怎么管理密码？",
+      "answer": "1. 地址栏输入 chrome://password-manager\n2. 查看已保存的密码列表\n3. 点击眼睛图标查看密码（需验证身份）\n4. 可以手动添加/编辑/删除密码\n5. 设置中开启自动填充密码",
+      "selectors": [
+        "#passwordManager"
+      ],
+      "url_pattern": "chrome://password-manager/*"
+    },
+    {
+      "question": "怎么清除特定网站的数据？",
+      "answer": "1. 打开目标网站\n2. 点击地址栏左侧的锁图标\n3. 点击网站设置\n4. 点击清除数据\n5. 或在 chrome://settings/siteData 中搜索并删除",
+      "selectors": [
+        "#siteSettings"
+      ],
+      "url_pattern": "chrome://settings/*"
     }
   ]
 }

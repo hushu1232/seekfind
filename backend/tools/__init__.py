@@ -7,44 +7,75 @@
   Phase 2: highlight_element, visual_locate, screenshot_annotate
   Phase 3: classify_page, learn_flow
 
-关键设计：
-  - get_all_tools(): 返回原始工具实例
+关键设计（懒加载）：
+  - _TOOL_REGISTRY: 工具名 → "模块路径:属性名" 映射表
+  - _load_tool(name): 按需加载单个工具，结果缓存
+  - get_all_tools(): 返回所有工具实例（按需加载 + 缓存）
   - get_langchain_tools(deps): 返回 LangChain StructuredTool，通过 partial 注入依赖
-  - 依赖注入：long_term_memory 在 agent.initialize() 后传入
+  - 依赖注入：long_term_memory / fingerprint_storage 在 agent.initialize() 后传入
+
+灵感来源：Scrapling 的 __getattr__ 懒加载模式。
 """
 
 import functools
+import importlib
 from typing import Any
 
 from langchain_core.tools import StructuredTool
 import pydantic
 
-from tools.search_docs import search_docs_tool
-from tools.fetch_doc_page import fetch_doc_page_tool
-from tools.memory_tools import save_memory_tool, recall_memory_tool
-from tools.highlight_element import highlight_element_tool
-from tools.visual_locate import visual_locate_tool
-from tools.screenshot_annotate import screenshot_annotate_tool
-from tools.classify_page import classify_page_tool
-from tools.learn_flow import learn_flow_tool
-
-__all__ = ["get_all_tools", "get_tool_schemas", "get_langchain_tools"]
+__all__ = ["get_all_tools", "get_tool_schemas", "get_langchain_tools", "get_tool_by_name"]
 
 
 # ---------------------------------------------------------------------------
-# 原始工具实例
+# 懒加载注册表：工具名 → "模块路径:属性名"
 # ---------------------------------------------------------------------------
-_ALL_TOOLS = [
-    search_docs_tool,
-    fetch_doc_page_tool,
-    save_memory_tool,
-    recall_memory_tool,
-    highlight_element_tool,
-    visual_locate_tool,
-    screenshot_annotate_tool,
-    classify_page_tool,
-    learn_flow_tool,
-]
+_TOOL_REGISTRY = {
+    "search_docs": "tools.search_docs:search_docs_tool",
+    "fetch_doc_page": "tools.fetch_doc_page:fetch_doc_page_tool",
+    "save_memory": "tools.memory_tools:save_memory_tool",
+    "recall_memory": "tools.memory_tools:recall_memory_tool",
+    "highlight_element": "tools.highlight_element:highlight_element_tool",
+    "visual_locate": "tools.visual_locate:visual_locate_tool",
+    "screenshot_annotate": "tools.screenshot_annotate:screenshot_annotate_tool",
+    "classify_page": "tools.classify_page:classify_page_tool",
+    "learn_flow": "tools.learn_flow:learn_flow_tool",
+    "browser_snapshot": "tools.browser_tools:browser_snapshot_tool",
+    "browser_interact": "tools.browser_tools:browser_interact_tool",
+    "browser_find": "tools.browser_tools:browser_find_tool",
+}
+
+# 缓存已加载的工具实例
+_loaded_tools: dict[str, object] = {}
+
+
+def _load_tool(name: str):
+    """按需加载单个工具（首次加载后缓存）。"""
+    if name in _loaded_tools:
+        return _loaded_tools[name]
+
+    entry = _TOOL_REGISTRY.get(name)
+    if not entry:
+        raise KeyError(f"未知工具: {name}，可用: {list(_TOOL_REGISTRY.keys())}")
+
+    module_path, attr = entry.split(":")
+    module = importlib.import_module(module_path)
+    tool = getattr(module, attr)
+    _loaded_tools[name] = tool
+    return tool
+
+
+def get_tool_by_name(name: str):
+    """按名称获取单个工具实例。"""
+    return _load_tool(name)
+
+
+# ---------------------------------------------------------------------------
+# 原始工具实例（懒加载）
+# ---------------------------------------------------------------------------
+def get_all_tools() -> list:
+    """返回所有工具实例（按需加载 + 缓存）。"""
+    return [_load_tool(name) for name in _TOOL_REGISTRY]
 
 
 # ---------------------------------------------------------------------------
@@ -102,14 +133,22 @@ def _make_langchain_tool(tool_instance, **deps) -> StructuredTool:
 _langchain_tools: list[StructuredTool] | None = None
 
 
-def get_langchain_tools(long_term_memory=None, vision_model=None, llm=None) -> list[StructuredTool]:
+def get_langchain_tools(
+    long_term_memory=None,
+    vision_model=None,
+    llm=None,
+    fingerprint_storage=None,
+    browser_controller=None,
+) -> list[StructuredTool]:
     """
     返回 LangChain StructuredTool 列表（支持依赖注入）。
 
     Args:
-        long_term_memory: Chroma 向量库实例（注入到 search_docs/save_memory/recall_memory）
-        vision_model: moondream 视觉模型（注入到 visual_locate）
-        llm: LLM 实例（注入到 classify_page）
+        long_term_memory: Chroma 向量库实例
+        vision_model: moondream 视觉模型
+        llm: LLM 实例
+        fingerprint_storage: 元素指纹存储
+        browser_controller: 浏览器控制器
 
     使用 functools.partial 将依赖预绑定到工具的 execute 方法，
     ToolNode 调用时只需传入 LLM 提供的参数。
@@ -123,16 +162,16 @@ def get_langchain_tools(long_term_memory=None, vision_model=None, llm=None) -> l
         deps["vision_model"] = vision_model
     if llm:
         deps["llm"] = llm
+    if fingerprint_storage:
+        deps["fingerprint_storage"] = fingerprint_storage
+    if browser_controller:
+        deps["browser_controller"] = browser_controller
 
-    _langchain_tools = [_make_langchain_tool(t, **deps) for t in _ALL_TOOLS]
+    tools = get_all_tools()  # 懒加载
+    _langchain_tools = [_make_langchain_tool(t, **deps) for t in tools]
     return _langchain_tools
-
-
-def get_all_tools() -> list:
-    """返回原始工具实例列表。"""
-    return list(_ALL_TOOLS)
 
 
 def get_tool_schemas() -> list[dict]:
     """返回所有工具的 Function Calling schema。"""
-    return [tool.schema for tool in _ALL_TOOLS]
+    return [tool.schema for tool in get_all_tools()]

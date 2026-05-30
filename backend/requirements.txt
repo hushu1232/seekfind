@@ -25,6 +25,13 @@ httpx==0.28.*
 # --- 文档清洗 ---
 trafilatura==1.12.*
 
+# --- Scrapling（自适应爬取 + 反检测）---
+# 核心包（HTTP 模式，基于 curl_cffi，无需 playwright）
+scrapling>=0.4.8
+
+# --- 浏览器指纹生成（可选）---
+browserforge>=0.3.0
+
 # --- 配置 ---
 pydantic-settings==2.*
 
@@ -39,6 +46,9 @@ ollama==0.4.*
 
 # --- 文件上传 ---
 python-multipart==0.0.*
+
+# --- MCP Server ---
+mcp>=1.0.0
 
 # --- 语音合成 (Phase 4) ---
 edge-tts==6.*

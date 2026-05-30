@@ -19,6 +19,48 @@
       "answer": "1. 打开飞书，点击左侧视频会议图标\n2. 点击 新会议\n3. 选择会议类型（立即开会/预约会议）\n4. 邀请参与人\n5. 点击开始会议",
       "selectors": ["[data-testid='start-meeting']"],
       "url_pattern": "*.feishu.cn/*"
+    },
+    {
+      "question": "怎么创建审批流程？",
+      "answer": "1. 打开飞书工作台\n2. 搜索并打开 审批 应用\n3. 点击 创建审批\n4. 选择审批类型（请假/报销/出差等）或自定义\n5. 配置审批流程（审批人/抄送人）\n6. 填写表单内容\n7. 提交审批",
+      "selectors": ["[data-testid='approval-create']"],
+      "url_pattern": "*.feishu.cn/approval/*"
+    },
+    {
+      "question": "怎么使用飞书文档协作？",
+      "answer": "1. 打开文档，点击右上角分享\n2. 输入协作者姓名或邮箱\n3. 设置权限（可阅读/可编辑/可管理）\n4. 协作者可实时编辑同一文档\n5. 使用 @ 提及同事\n6. 使用评论功能讨论具体段落",
+      "selectors": ["[data-testid='share-btn']", "[data-testid='collaborator-input']"],
+      "url_pattern": "*.feishu.cn/docx/*"
+    },
+    {
+      "question": "怎么管理云盘文件？",
+      "answer": "1. 打开飞书，点击左侧云文档\n2. 选择 我的空间 或 团队空间\n3. 点击新建文件夹整理文件\n4. 拖拽文件上传或点击上传按钮\n5. 右键文件可分享/移动/重命名/删除\n6. 使用搜索框快速查找文件",
+      "selectors": ["[data-testid='drive-panel']"],
+      "url_pattern": "*.feishu.cn/drive/*"
+    },
+    {
+      "question": "怎么配置飞书机器人？",
+      "answer": "1. 进入群聊，点击右上角设置\n2. 选择 群机器人 > 添加机器人\n3. 选择自定义机器人\n4. 配置机器人名称和头像\n5. 获取 Webhook URL\n6. 通过 Webhook 发送消息到群聊",
+      "selectors": ["[data-testid='bot-settings']"],
+      "url_pattern": "*.feishu.cn/*"
+    },
+    {
+      "question": "怎么使用多维表格？",
+      "answer": "1. 新建多维表格\n2. 添加字段（文本/数字/单选/多选/日期/人员等）\n3. 添加记录数据\n4. 创建不同视图（表格/看板/甘特图/日历）\n5. 设置筛选和排序条件\n6. 使用公式字段进行计算",
+      "selectors": ["[data-testid='bitable']"],
+      "url_pattern": "*.feishu.cn/base/*"
+    },
+    {
+      "question": "怎么设置消息提醒？",
+      "answer": "1. 点击头像 > 设置 > 通知\n2. 配置消息通知方式（应用内/邮件/手机推送）\n3. 设置免打扰时段\n4. 针对特定群聊设置消息提醒级别\n5. 使用 /DND 开启免打扰模式",
+      "selectors": ["[data-testid='notification-settings']"],
+      "url_pattern": "*.feishu.cn/*"
+    },
+    {
+      "question": "怎么创建知识库？",
+      "answer": "1. 打开飞书，点击左侧知识库\n2. 点击 新建知识库\n3. 设置知识库名称和描述\n4. 添加成员并设置权限\n5. 创建目录结构\n6. 将文档添加到知识库中",
+      "selectors": ["[data-testid='wiki-create']"],
+      "url_pattern": "*.feishu.cn/wiki/*"
     }
   ]
 }

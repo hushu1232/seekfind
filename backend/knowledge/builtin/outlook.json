@@ -5,13 +5,52 @@
     {
       "question": "怎么发送邮件？",
       "answer": "1. 点击左上角 New mail 按钮\n2. 输入收件人\n3. 输入主题和正文\n4. 可选：添加附件、设置重要性\n5. 点击 Send",
-      "selectors": ["[aria-label='New mail']"],
+      "selectors": [
+        "[aria-label='New mail']"
+      ],
       "url_pattern": "outlook.live.com/*"
     },
     {
       "question": "怎么创建日程？",
       "answer": "1. 点击左侧日历图标\n2. 点击 New event\n3. 输入标题、时间、地点\n4. 添加参与人\n5. 设置提醒\n6. 点击 Save",
-      "selectors": ["[aria-label='New event']"],
+      "selectors": [
+        "[aria-label='New event']"
+      ],
+      "url_pattern": "outlook.live.com/*"
+    },
+    {
+      "question": "怎么创建规则自动分类邮件？",
+      "answer": "1. 右键邮件 → Rules → Create Rule\n2. 设置条件（发件人/主题等）\n3. 选择操作（移动到文件夹/标记等）\n4. 点击 OK 保存规则",
+      "selectors": [
+        "[data-testid='create-rule']",
+        ".rule-btn"
+      ],
+      "url_pattern": "outlook.live.com/*"
+    },
+    {
+      "question": "怎么使用日历功能？",
+      "answer": "1. 点击左下角日历图标\n2. 点击 New Event 创建日程\n3. 设置时间/标题/参与人\n4. 可选：设置提醒/重复\n5. 点击 Save",
+      "selectors": [
+        "[data-testid='calendar']",
+        ".calendar-btn"
+      ],
+      "url_pattern": "outlook.live.com/calendar/*"
+    },
+    {
+      "question": "怎么设置邮件签名？",
+      "answer": "1. Settings → View all Outlook settings\n2. Mail → Compose and reply\n3. 在 Email signature 区域编辑签名\n4. 可设置新邮件/转发使用不同签名\n5. 点击 Save",
+      "selectors": [
+        "[data-testid='signature']",
+        ".signature-settings"
+      ],
+      "url_pattern": "outlook.live.com/*"
+    },
+    {
+      "question": "怎么使用焦点收件箱？",
+      "answer": "1. 焦点收件箱自动将重要邮件放在焦点标签\n2. 其他邮件放在其他标签\n3. 右键邮件可切换分类\n4. 系统会学习你的偏好",
+      "selectors": [
+        "[data-testid='focused-inbox']"
+      ],
       "url_pattern": "outlook.live.com/*"
     }
   ]

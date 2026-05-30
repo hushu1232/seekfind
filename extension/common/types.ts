@@ -12,7 +12,11 @@ export type ClientMessage =
   | { type: "ping" }
   | { type: "user_message"; text: string; page_context?: PageContext }
   | { type: "page_event"; event: PageEvent }
-  | { type: "feedback"; feedback: FeedbackData };
+  | { type: "feedback"; feedback: FeedbackData }
+  | { type: "flow_step"; step: FlowStep }
+  | { type: "flow_action"; action: "start_recording" | "stop_recording" | "replay" | "list"; flow_name?: string }
+  | { type: "browser_snapshot"; options?: SnapshotOptions }
+  | { type: "browser_interact"; ref: string; action: string; value?: string };
 
 /** 服务端 → 客户端 */
 export type ServerMessage =
@@ -25,7 +29,9 @@ export type ServerMessage =
   | { type: "highlight"; selector: string; fallback_selector?: string; description: string; order: number; style?: HighlightStyle }
   | { type: "screenshot_annotated"; image_base64: string; description?: string }
   | { type: "visual_locate_hint"; description: string; order: number; message: string }
-  | { type: "proactive_hint"; message: string };
+  | { type: "proactive_hint"; message: string }
+  | { type: "snapshot_result"; text: string; refCount: number; url: string; title: string }
+  | { type: "interaction_result"; success: boolean; error?: string };
 
 // ---------------------------------------------------------------------------
 // 意图类型
@@ -88,6 +94,28 @@ export interface ChatMessage {
   content: string;
   timestamp: number;
   intent?: IntentType;
+}
+
+// ---------------------------------------------------------------------------
+// 操作流
+// ---------------------------------------------------------------------------
+
+export interface FlowStep {
+  action: "click" | "input" | "navigate" | "scroll";
+  selector: string;
+  description: string;
+  value?: string;
+  timestamp: number;
+}
+
+// ---------------------------------------------------------------------------
+// 浏览器控制
+// ---------------------------------------------------------------------------
+
+export interface SnapshotOptions {
+  interactiveOnly?: boolean;
+  selector?: string;
+  maxDepth?: number;
 }
 
 // ---------------------------------------------------------------------------

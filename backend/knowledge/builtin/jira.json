@@ -19,6 +19,36 @@
       "answer": "1. 在 Issue 列表页面，点击顶部 Filters\n2. 使用快速筛选器（My Issues / Recently Updated）\n3. 或使用 JQL 查询：project = XXX AND status = 'To Do'\n4. 保存常用筛选器为 Favorites",
       "selectors": ["[data-testid='quick-filter']"],
       "url_pattern": "*.atlassian.net/*"
+    },
+    {
+      "question": "怎么配置看板列？",
+      "answer": "1. 进入 Board 页面\n2. 点击右上角 Board settings\n3. 选择 Columns 标签\n4. 添加/删除列\n5. 将状态映射到列（如 In Progress → Doing）\n6. 设置 WIP 限制（每列最大卡片数）",
+      "selectors": ["[data-testid='board-settings']"],
+      "url_pattern": "*.atlassian.net/*"
+    },
+    {
+      "question": "怎么管理 Sprint？",
+      "answer": "1. 进入 Backlog 页面\n2. 点击 Create sprint 创建新 Sprint\n3. 设置 Sprint 名称、开始/结束日期\n4. 从 Backlog 拖拽 Issue 到 Sprint\n5. 点击 Start sprint 开始\n6. Sprint 结束时点击 Complete sprint",
+      "selectors": ["[data-testid='sprint-management']"],
+      "url_pattern": "*.atlassian.net/*"
+    },
+    {
+      "question": "怎么创建自动化规则？",
+      "answer": "1. 进入项目 Settings > Automation\n2. 点击 Create rule\n3. 选择触发器（如 When issue transitions）\n4. 添加条件（如 Issue type = Bug）\n5. 添加动作（如 Assign to user, Send notification）\n6. 保存并启用规则",
+      "selectors": ["[data-testid='automation']"],
+      "url_pattern": "*.atlassian.net/*"
+    },
+    {
+      "question": "怎么查看项目报告？",
+      "answer": "1. 点击左侧菜单 Reports 或 Dashboards\n2. 查看 Burndown Chart（燃尽图）\n3. 查看 Velocity Chart（速度图）\n4. 查看 Cumulative Flow Diagram（累积流图）\n5. 自定义 Dashboard 添加小工具",
+      "selectors": ["[data-testid='reports']"],
+      "url_pattern": "*.atlassian.net/*"
+    },
+    {
+      "question": "怎么配置通知？",
+      "answer": "1. 点击头像 > Personal settings > Notifications\n2. 选择通知方式（Email/Slack/MS Teams）\n3. 配置通知规则（所有活动/仅提及我/仅指派给我）\n4. 设置静默时段\n5. 在项目级别可覆盖个人设置",
+      "selectors": ["[data-testid='notification-settings']"],
+      "url_pattern": "*.atlassian.net/*"
     }
   ]
 }

@@ -17,6 +17,7 @@ from tools.memory_tools import SaveMemoryTool, RecallMemoryTool
 from tools.highlight_element import HighlightElementTool
 from tools.classify_page import ClassifyPageTool
 from tools.learn_flow import LearnFlowTool
+from tools import get_all_tools, get_tool_by_name, get_tool_schemas
 
 
 class TestSearchDocsTool:
@@ -102,15 +103,46 @@ class TestHighlightElementTool:
         assert tool.name == "highlight_element"
         assert "selector" in tool.schema["parameters"]["properties"]
         assert "description" in tool.schema["parameters"]["properties"]
+        assert "page_url" in tool.schema["parameters"]["properties"]
 
     @pytest.mark.asyncio
     async def test_execute_returns_highlight_command(self):
         tool = HighlightElementTool()
-        result = await tool.execute("#test-btn", "测试按钮")
+        result = await tool.execute("#test-btn", "测试按钮", "https://example.com/dashboard")
         data = json.loads(result)
         assert data["action"] == "highlight"
         assert data["selector"] == "#test-btn"
         assert data["description"] == "测试按钮"
+
+    @pytest.mark.asyncio
+    async def test_execute_with_fingerprint_storage(self, fingerprint_storage):
+        """有指纹存储时，定位成功后自动存储指纹。"""
+        tool = HighlightElementTool()
+        result = await tool.execute(
+            "#create-btn", "创建按钮", "https://github.com/dashboard",
+            fingerprint_storage=fingerprint_storage,
+        )
+        data = json.loads(result)
+        assert data["action"] == "highlight"
+
+        # 验证指纹已存储
+        fp = fingerprint_storage.find("https://github.com/settings", "创建按钮")
+        assert fp is not None
+        assert fp["selector"] == "#create-btn"
+
+    @pytest.mark.asyncio
+    async def test_execute_auto_from_fingerprint(self, fingerprint_storage):
+        """selector 为 auto 时从指纹库查找。"""
+        # 先存储一个指纹
+        fingerprint_storage.save("github.com", "#cached-btn", "缓存按钮")
+
+        tool = HighlightElementTool()
+        result = await tool.execute(
+            "auto", "缓存按钮", "https://github.com/dashboard",
+            fingerprint_storage=fingerprint_storage,
+        )
+        data = json.loads(result)
+        assert data["selector"] == "#cached-btn"
 
 
 class TestClassifyPageTool:
@@ -190,3 +222,36 @@ class TestLearnFlowTool:
         tool = LearnFlowTool()
         tool.add_step("click", "#btn", "点击按钮")
         assert len(tool._current_steps) == 0
+
+
+class TestToolLazyLoading:
+    """工具懒加载测试。"""
+
+    def test_get_all_tools_returns_12_tools(self):
+        """get_all_tools 返回 12 个工具（含 3 个浏览器工具）。"""
+        tools = get_all_tools()
+        assert len(tools) == 12
+
+    def test_get_tool_by_name(self):
+        """按名称获取工具。"""
+        tool = get_tool_by_name("search_docs")
+        assert tool.name == "search_docs"
+
+    def test_get_tool_by_name_unknown(self):
+        """未知工具名抛出 KeyError。"""
+        with pytest.raises(KeyError, match="未知工具"):
+            get_tool_by_name("nonexistent_tool")
+
+    def test_get_tool_schemas(self):
+        """get_tool_schemas 返回 12 个 schema。"""
+        schemas = get_tool_schemas()
+        assert len(schemas) == 12
+        for schema in schemas:
+            assert "name" in schema
+            assert "parameters" in schema
+
+    def test_tool_caching(self):
+        """同一工具多次获取返回同一实例。"""
+        tool1 = get_tool_by_name("search_docs")
+        tool2 = get_tool_by_name("search_docs")
+        assert tool1 is tool2

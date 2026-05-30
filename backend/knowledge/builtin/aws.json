@@ -5,20 +5,62 @@
     {
       "question": "怎么创建 EC2 实例？",
       "answer": "1. 登录 AWS Console，搜索 EC2\n2. 点击 Launch Instance\n3. 选择 AMI（如 Amazon Linux 2023）\n4. 选择实例类型（如 t3.micro 免费套餐）\n5. 配置密钥对（创建新的或选择已有）\n6. 配置安全组（开放 22/80/443 端口）\n7. 点击 Launch",
-      "selectors": ["[id='create-instance-button']"],
+      "selectors": [
+        "[id='create-instance-button']"
+      ],
       "url_pattern": "console.aws.amazon.com/*"
     },
     {
       "question": "怎么创建 S3 存储桶？",
       "answer": "1. 搜索 S3，进入 S3 控制台\n2. 点击 Create bucket\n3. 输入存储桶名称（全球唯一）\n4. 选择区域\n5. 配置权限（默认私有）\n6. 点击 Create bucket\n7. 上传文件：进入存储桶 → Upload",
-      "selectors": ["[id='create-bucket-button']"],
+      "selectors": [
+        "[id='create-bucket-button']"
+      ],
       "url_pattern": "console.aws.amazon.com/s3/*"
     },
     {
       "question": "怎么配置 IAM 用户？",
       "answer": "1. 搜索 IAM，进入 IAM 控制台\n2. 左侧点击 Users → Create user\n3. 输入用户名\n4. 选择访问类型（控制台/编程/两者）\n5. 设置权限（附加策略或加入组）\n6. 创建并下载访问密钥",
-      "selectors": ["[id='create-user-button']"],
+      "selectors": [
+        "[id='create-user-button']"
+      ],
       "url_pattern": "console.aws.amazon.com/iam/*"
+    },
+    {
+      "question": "怎么创建 EC2 实例？",
+      "answer": "1. 登录 AWS Console → EC2\n2. 点击 Launch Instance\n3. 选择 AMI（如 Amazon Linux 2）\n4. 选择实例类型（如 t2.micro）\n5. 配置安全组和密钥对\n6. 点击 Launch",
+      "selectors": [
+        "[data-testid='launch-instance']",
+        "#ec2-launch"
+      ],
+      "url_pattern": "console.aws.amazon.com/*"
+    },
+    {
+      "question": "怎么使用 S3 存储？",
+      "answer": "1. 进入 S3 控制台\n2. 点击 Create bucket\n3. 输入桶名称和区域\n4. 设置权限\n5. 上传文件\n6. 设置生命周期规则",
+      "selectors": [
+        "[data-testid='create-bucket']",
+        "#s3-create"
+      ],
+      "url_pattern": "console.aws.amazon.com/*"
+    },
+    {
+      "question": "怎么配置 IAM 用户？",
+      "answer": "1. 进入 IAM 控制台\n2. 点击 Users → Add users\n3. 输入用户名\n4. 设置权限\n5. 创建访问密钥\n6. 安全保存密钥",
+      "selectors": [
+        "[data-testid='add-user']",
+        "#iam-add-user"
+      ],
+      "url_pattern": "console.aws.amazon.com/*"
+    },
+    {
+      "question": "怎么查看账单？",
+      "answer": "1. 进入 Billing Dashboard\n2. 查看本月费用概览\n3. 在 Cost Explorer 查看历史趋势\n4. 设置预算告警\n5. 查看各项服务费用明细",
+      "selectors": [
+        "[data-testid='billing']",
+        "#billing-dashboard"
+      ],
+      "url_pattern": "console.aws.amazon.com/*"
     }
   ]
 }

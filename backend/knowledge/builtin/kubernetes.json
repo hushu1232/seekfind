@@ -5,19 +5,57 @@
     {
       "question": "怎么查看 Pod 状态？",
       "answer": "1. 查看所有 Pod：kubectl get pods\n2. 查看指定命名空间：kubectl get pods -n <namespace>\n3. 查看详细信息：kubectl describe pod <pod-name>\n4. 查看日志：kubectl logs <pod-name>\n5. 实时查看日志：kubectl logs -f <pod-name>",
-      "selectors": [],
+      "selectors": [
+        "[data-testid='kubectl-get']"
+      ],
       "url_pattern": ""
     },
     {
       "question": "怎么部署一个应用？",
       "answer": "1. 创建 Deployment：kubectl create deployment <name> --image=<image>\n2. 暴露服务：kubectl expose deployment <name> --port=80 --type=LoadBalancer\n3. 查看状态：kubectl get deployments\n4. 扩容：kubectl scale deployment <name> --replicas=3\n5. 更新镜像：kubectl set image deployment/<name> <container>=<new-image>",
-      "selectors": [],
+      "selectors": [
+        "[data-testid='kubectl-apply']"
+      ],
       "url_pattern": ""
     },
     {
       "question": "怎么查看集群状态？",
       "answer": "1. 查看节点：kubectl get nodes\n2. 查看集群信息：kubectl cluster-info\n3. 查看所有资源：kubectl get all --all-namespaces\n4. 查看事件：kubectl get events --sort-by=.metadata.creationTimestamp",
-      "selectors": [],
+      "selectors": [
+        "[data-testid='kubectl-scale']"
+      ],
+      "url_pattern": ""
+    },
+    {
+      "question": "怎么查看 Pod 状态？",
+      "answer": "1. kubectl get pods 查看所有 Pod\n2. kubectl get pods -n namespace 指定命名空间\n3. kubectl describe pod name 查看详情\n4. kubectl logs name 查看日志\n5. kubectl logs -f name 实时跟踪日志",
+      "selectors": [
+        "[data-testid='kubectl-get']"
+      ],
+      "url_pattern": ""
+    },
+    {
+      "question": "怎么部署应用？",
+      "answer": "1. 编写 Deployment YAML\n2. kubectl apply -f deployment.yaml\n3. 查看部署状态：kubectl get deployments\n4. 查看 Pod：kubectl get pods\n5. 暴露服务：kubectl expose deployment name --port=80",
+      "selectors": [
+        "[data-testid='kubectl-apply']"
+      ],
+      "url_pattern": ""
+    },
+    {
+      "question": "怎么扩容缩容？",
+      "answer": "1. 手动扩容：kubectl scale deployment name --replicas=3\n2. 查看当前副本数：kubectl get deployment name\n3. 自动扩容：配置 HPA\n4. kubectl autoscale deployment name --min=2 --max=5 --cpu-percent=80",
+      "selectors": [
+        "[data-testid='kubectl-scale']"
+      ],
+      "url_pattern": ""
+    },
+    {
+      "question": "怎么使用 ConfigMap？",
+      "answer": "1. 创建：kubectl create configmap name --from-literal=key=value\n2. 从文件创建：kubectl create configmap name --from-file=config.yaml\n3. 在 Pod 中引用：envFrom → configMapRef\n4. 更新后需重启 Pod",
+      "selectors": [
+        "[data-testid='kubectl-configmap']"
+      ],
       "url_pattern": ""
     }
   ]

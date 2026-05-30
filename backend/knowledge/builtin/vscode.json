@@ -31,6 +31,36 @@
       "answer": "1. 按 Ctrl+H 打开搜索替换面板\n2. 在搜索框输入要查找的内容\n3. 在替换框输入替换内容\n4. 点击单个替换（→箭头）或全部替换\n5. 支持正则表达式：点击 .* 图标启用",
       "selectors": [".search-replace", "[class*='findWidget']"],
       "url_pattern": "vscode://*"
+    },
+    {
+      "question": "怎么配置 Git？",
+      "answer": "1. 按 Ctrl+Shift+G 打开源代码管理面板\n2. 初始化仓库：点击 Initialize Repository\n3. 暂存更改：点击文件旁的 + 号\n4. 提交：输入提交消息，点击 ✓ 按钮\n5. 推送：点击状态栏的同步按钮或 ... 菜单 > Push",
+      "selectors": ["[class*='scm-view']", "#workbench.view.scm"],
+      "url_pattern": "vscode://*"
+    },
+    {
+      "question": "怎么使用多光标编辑？",
+      "answer": "1. 按住 Alt 点击：在点击位置添加光标\n2. Ctrl+D：选中下一个相同文本\n3. Ctrl+Shift+L：选中所有相同文本\n4. Ctrl+Alt+↑/↓：在上/下方添加光标\n5. Shift+Alt+拖动：矩形选择",
+      "selectors": ["[class*='cursor']"],
+      "url_pattern": "vscode://*"
+    },
+    {
+      "question": "怎么配置 launch.json 调试配置？",
+      "answer": "1. 按 F5 或点击 Run and Debug 面板\n2. 点击 create a launch.json file\n3. 选择环境（如 Python、Node.js）\n4. 编辑生成的 launch.json：配置 program、args、env 等\n5. 保存后按 F5 使用该配置启动调试",
+      "selectors": ["[class*='debug-view']", "#debug:viewlet"],
+      "url_pattern": "vscode://*"
+    },
+    {
+      "question": "怎么安装和管理代码片段？",
+      "answer": "1. 按 Ctrl+Shift+P 打开命令面板\n2. 输入 Snippets，选择 Configure User Snippets\n3. 选择语言（如 javascript.json）\n4. 添加片段：{ \"Print to console\": { \"prefix\": \"log\", \"body\": [\"console.log($1)\"] } }\n5. 使用时输入前缀 log，按 Tab 展开",
+      "selectors": ["[class*='snippets']"],
+      "url_pattern": "vscode://*"
+    },
+    {
+      "question": "怎么使用远程开发？",
+      "answer": "1. 安装 Remote - SSH 扩展\n2. 按 Ctrl+Shift+P，输入 Remote-SSH: Connect to Host\n3. 输入 SSH 地址（如 user@192.168.1.100）\n4. 选择操作系统类型\n5. 输入密码或使用密钥认证\n6. 连接成功后像本地一样编辑远程文件",
+      "selectors": ["[class*='remote']"],
+      "url_pattern": "vscode://*"
     }
   ]
 }

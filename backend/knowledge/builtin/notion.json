@@ -19,6 +19,48 @@
       "answer": "1. 点击右上角 Share 按钮\n2. 开启 Share to the web 发布为公开页面\n3. 或邀请特定成员：输入邮箱，设置权限（Can view/Can edit）\n4. 复制链接分享",
       "selectors": ["[data-testid='share-button']"],
       "url_pattern": "notion.so/*"
+    },
+    {
+      "question": "怎么创建数据库视图？",
+      "answer": "1. 打开数据库，点击左上角 + Add view\n2. 选择视图类型（Table/Board/Calendar/Timeline/List/Gallery）\n3. 命名视图\n4. 配置筛选条件：点击 Filter\n5. 配置排序：点击 Sort\n6. 配置分组：点击 Group by",
+      "selectors": ["[data-testid='add-view']"],
+      "url_pattern": "notion.so/*"
+    },
+    {
+      "question": "怎么使用模板？",
+      "answer": "1. 创建新页面时选择 Templates\n2. 浏览模板分类（Product/Design/Engineering 等）\n3. 点击模板预览\n4. 点击 Use this template 使用\n5. 也可以将自己的页面保存为模板：页面菜单 > Save as template",
+      "selectors": ["[data-testid='template-gallery']"],
+      "url_pattern": "notion.so/*"
+    },
+    {
+      "question": "怎么使用关联属性？",
+      "answer": "1. 在数据库中添加新列\n2. 选择 Relation 类型\n3. 选择要关联的数据库\n4. 配置关联方式（双向/单向）\n5. 在单元格中选择关联的条目\n6. 可使用 Rollup 属性聚合关联数据",
+      "selectors": ["[data-testid='relation-property']"],
+      "url_pattern": "notion.so/*"
+    },
+    {
+      "question": "怎么使用公式属性？",
+      "answer": "1. 在数据库中添加新列\n2. 选择 Formula 类型\n3. 输入公式表达式\n4. 常用函数：prop(\"列名\")、if()、format()、dateBetween()\n5. 公式结果自动计算\n6. 可嵌套使用函数",
+      "selectors": ["[data-testid='formula-property']"],
+      "url_pattern": "notion.so/*"
+    },
+    {
+      "question": "怎么导入数据？",
+      "answer": "1. 点击左侧边栏 ... > Import\n2. 选择导入格式（Markdown/CSV/HTML/Word/Excel 等）\n3. 上传文件或粘贴内容\n4. Notion 自动转换格式\n5. 导入后可手动调整排版",
+      "selectors": ["[data-testid='import-btn']"],
+      "url_pattern": "notion.so/*"
+    },
+    {
+      "question": "怎么使用 API 集成？",
+      "answer": "1. 访问 notion.so/my-integrations 创建集成\n2. 获取 API Token\n3. 在页面中连接集成：Share > Invite > 选择集成\n4. 使用 Notion API 读写数据\n5. 常用操作：查询数据库、创建页面、更新属性",
+      "selectors": ["[data-testid='integration-settings']"],
+      "url_pattern": "notion.so/*"
+    },
+    {
+      "question": "怎么设置权限？",
+      "answer": "1. 点击右上角 Share\n2. 邀请成员：输入邮箱，选择权限级别\n3. 权限级别：Full access（完全访问）/ Can edit（可编辑）/ Can comment（可评论）/ Can view（仅查看）\n4. 在 Workspace settings 中管理团队权限\n5. 可设置页面级别的权限继承",
+      "selectors": ["[data-testid='permission-settings']"],
+      "url_pattern": "notion.so/*"
     }
   ]
 }

@@ -50,15 +50,33 @@ class TTSService:
         初始化 TTS 引擎。
 
         优先使用 edge-tts（在线，质量高），
-        备选 sherpa-onnx（离线，延迟低）。
+        备选 pyttsx3（离线，跨平台）。
         """
+        # 优先 edge-tts（在线）
         try:
             import edge_tts
             self._use_edge_tts = True
             logger.info("TTS 引擎初始化完成", engine="edge-tts", voice=self._voice)
+            return
         except ImportError:
-            logger.warning("edge-tts 未安装，TTS 功能不可用")
+            pass
+
+        # 降级到 pyttsx3（离线）
+        try:
+            import pyttsx3
+            self._engine = pyttsx3.init()
+            self._engine.setProperty("rate", 150)  # 语速
+            self._engine.setProperty("volume", 0.9)  # 音量
             self._use_edge_tts = False
+            logger.info("TTS 引擎初始化完成（离线模式）", engine="pyttsx3")
+            return
+        except Exception as e:
+            logger.warning("pyttsx3 初始化失败", error=str(e))
+
+        # 全部不可用
+        self._use_edge_tts = False
+        self._engine = None
+        logger.warning("TTS 功能不可用（edge-tts 和 pyttsx3 均不可用）")
 
     async def shutdown(self) -> None:
         self._engine = None
@@ -85,7 +103,7 @@ class TTSService:
 
         Returns:
             {
-                "audio": "base64 编码的 PCM 音频",
+                "audio": "base64 编码的音频",
                 "sample_rate": 16000,
                 "duration_ms": 3000,
                 "mouth_data": [0.2, 0.5, 0.8, ...]  # 口型同步振幅序列
@@ -96,8 +114,52 @@ class TTSService:
 
         if self._use_edge_tts:
             return await self._synthesize_edge_tts(text)
+        elif self._engine:
+            return await self._synthesize_pyttsx3(text)
         else:
             return {"audio": "", "sample_rate": 16000, "duration_ms": 0, "mouth_data": []}
+
+    async def _synthesize_pyttsx3(self, text: str) -> dict:
+        """使用 pyttsx3 合成语音（离线模式）。"""
+        try:
+            import pyttsx3
+            import tempfile
+            import os
+
+            # 保存到临时文件
+            with tempfile.NamedTemporaryFile(suffix=".wav", delete=False) as f:
+                temp_path = f.name
+
+            self._engine.save_to_file(text, temp_path)
+            self._engine.runAndWait()
+
+            # 读取音频文件
+            if os.path.exists(temp_path):
+                with open(temp_path, "rb") as f:
+                    audio_data = f.read()
+                os.unlink(temp_path)
+
+                audio_base64 = base64.b64encode(audio_data).decode("utf-8")
+                # WAV 文件大约 16kHz * 2bytes = 32KB/s
+                duration_ms = len(audio_data) * 1000 // 32000
+
+                # 生成口型同步数据
+                mouth_frames = max(1, duration_ms // 100)
+                mouth_data = [0.3 + 0.4 * (i % 3) / 2 for i in range(mouth_frames)]
+
+                logger.info("pyttsx3 合成完成", text_len=len(text), duration_ms=duration_ms)
+
+                return {
+                    "audio": audio_base64,
+                    "sample_rate": 16000,
+                    "duration_ms": duration_ms,
+                    "mouth_data": mouth_data,
+                }
+
+        except Exception as e:
+            logger.error("pyttsx3 合成失败", error=str(e))
+
+        return {"audio": "", "sample_rate": 16000, "duration_ms": 0, "mouth_data": []}
 
     async def _synthesize_edge_tts(self, text: str) -> dict:
         """使用 edge-tts 合成语音。"""

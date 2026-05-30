@@ -5,13 +5,51 @@
     {
       "question": "怎么部署项目？",
       "answer": "1. 登录 Vercel，点击 New Project\n2. 选择 Git 仓库（GitHub/GitLab/Bitbucket）\n3. 导入仓库\n4. 配置框架预设（自动检测）\n5. 点击 Deploy\n6. 等待部署完成，获得公网 URL",
-      "selectors": ["[data-testid='new-project-button']"],
+      "selectors": [
+        "[data-testid='new-project-button']"
+      ],
       "url_pattern": "vercel.com/*"
     },
     {
       "question": "怎么配置自定义域名？",
       "answer": "1. 进入项目 Settings → Domains\n2. 输入自定义域名\n3. 点击 Add\n4. 按提示配置 DNS 记录（CNAME 或 A 记录）\n5. 等待 SSL 证书自动签发",
-      "selectors": ["[data-testid='add-domain-button']"],
+      "selectors": [
+        "[data-testid='add-domain-button']"
+      ],
+      "url_pattern": "vercel.com/*"
+    },
+    {
+      "question": "怎么使用环境变量？",
+      "answer": "1. 进入项目 Settings → Environment Variables\n2. 添加变量名和值\n3. 选择环境（Production/Preview/Development）\n4. 点击 Save\n5. 重新部署后生效",
+      "selectors": [
+        "[data-testid='env-vars']"
+      ],
+      "url_pattern": "vercel.com/*"
+    },
+    {
+      "question": "怎么查看部署日志？",
+      "answer": "1. 进入项目 Deployments\n2. 点击最新部署\n3. 查看构建日志\n4. 查看运行时日志\n5. 可以查看每次部署的详情和差异",
+      "selectors": [
+        "[data-testid='deployment-logs']"
+      ],
+      "url_pattern": "vercel.com/*"
+    },
+    {
+      "question": "怎么使用 Serverless Functions？",
+      "answer": "1. 在项目中创建 api/ 目录\n2. 创建 JS/TS 文件（如 api/hello.js）\n3. 导出默认处理函数\n4. 推送代码后自动部署\n5. 访问 https://your-app.vercel.com/api/hello",
+      "selectors": [
+        "[data-testid='functions']",
+        ".serverless"
+      ],
+      "url_pattern": "vercel.com/*"
+    },
+    {
+      "question": "怎么配置预览部署？",
+      "answer": "1. 每次 PR 自动创建预览部署\n2. 预览 URL 格式：project-xxx.vercel.app\n3. 可以在 PR 中直接查看预览链接\n4. 合并 PR 后自动部署到生产环境\n5. 可以在 Settings 中配置预览行为",
+      "selectors": [
+        "[data-testid='preview']",
+        ".preview-deploy"
+      ],
       "url_pattern": "vercel.com/*"
     }
   ]

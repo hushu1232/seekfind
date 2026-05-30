@@ -41,6 +41,8 @@ from langgraph.prebuilt import ToolNode
 from config import settings, ModelStrategy
 from memory.short_term import ShortTermMemory
 from memory.long_term import LongTermMemory
+from memory.fingerprint_storage import get_fingerprint_storage
+from browser.controller import browser_controller
 from tools import get_langchain_tools
 
 logger = structlog.get_logger()
@@ -150,6 +152,8 @@ class QiuWenAgent:
         self._chat_llm = None
         self._cloud_llm = None
         self._long_term: LongTermMemory | None = None
+        self._fingerprint_storage = None
+        self._vision_model = None
         self._consecutive_failures: int = 0
 
     async def initialize(self) -> None:
@@ -167,8 +171,25 @@ class QiuWenAgent:
         self._long_term = LongTermMemory()
         await self._long_term.initialize()
 
-        # 工具（带依赖注入：long_term_memory 通过 partial 预绑定）
-        langchain_tools = get_langchain_tools(long_term_memory=self._long_term)
+        # 元素指纹存储（SQLite）
+        self._fingerprint_storage = get_fingerprint_storage()
+
+        # 视觉模型（可选，不阻塞启动）
+        try:
+            from vision.moondream import MoondreamVision
+            self._vision_model = MoondreamVision()
+            await self._vision_model.initialize()
+        except Exception as e:
+            logger.warning("视觉模型初始化失败，视觉定位不可用", error=str(e))
+            self._vision_model = None
+
+        # 工具（带依赖注入：long_term_memory / fingerprint_storage / vision_model / browser_controller 通过 partial 预绑定）
+        langchain_tools = get_langchain_tools(
+            long_term_memory=self._long_term,
+            fingerprint_storage=self._fingerprint_storage,
+            vision_model=self._vision_model,
+            browser_controller=browser_controller,
+        )
         llm_with_tools = base_llm.bind_tools(langchain_tools)
 
         # 构建子图
@@ -209,7 +230,12 @@ class QiuWenAgent:
             streaming=True,
             temperature=0.7,
         )
-        langchain_tools = get_langchain_tools(long_term_memory=self._long_term)
+        langchain_tools = get_langchain_tools(
+            long_term_memory=self._long_term,
+            fingerprint_storage=self._fingerprint_storage,
+            vision_model=self._vision_model,
+            browser_controller=browser_controller,
+        )
         llm_with_tools = base_llm.bind_tools(langchain_tools)
         self._rag_graph = _build_graph_real(llm_with_tools, ToolNode(langchain_tools))
         self._guide_graph = _build_graph_real(llm_with_tools, ToolNode(langchain_tools))

@@ -42,6 +42,20 @@ export const INTERNAL_MSG = {
   SEND_MESSAGE: "qiuwen:send_message",
   RECEIVE_MESSAGE: "qiuwen:receive_message",
   UPDATE_BALL_STATE: "qiuwen:update_ball_state",
+
+  // 操作流录制
+  FLOW_STEP: "qiuwen:flow_step",
+  RECORDED_STEPS: "qiuwen:recorded_steps",
+  START_RECORDING: "qiuwen:start_recording",
+  STOP_RECORDING: "qiuwen:stop_recording",
+
+  // 浏览器控制（agent-browser 能力）
+  SNAPSHOT: "qiuwen:snapshot",
+  SNAPSHOT_RESULT: "qiuwen:snapshot_result",
+  FIND_ELEMENT: "qiuwen:find_element",
+  FIND_RESULT: "qiuwen:find_result",
+  EXECUTE_INTERACTION: "qiuwen:execute_interaction",
+  INTERACTION_RESULT: "qiuwen:interaction_result",
 } as const;
 
 // ---------------------------------------------------------------------------

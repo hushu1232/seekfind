@@ -5,14 +5,54 @@
     {
       "question": "怎么创建新页面？",
       "answer": "1. 点击左侧菜单的 Create 按钮\n2. 选择空间（Space）\n3. 选择模板或空白页面\n4. 编写内容（支持富文本、表格、代码块）\n5. 点击 Publish 发布",
-      "selectors": ["[data-testid='create-button']"],
+      "selectors": [
+        "[data-testid='create-button']"
+      ],
       "url_pattern": "*.atlassian.net/wiki/*"
     },
     {
       "question": "怎么在页面中插入宏？",
       "answer": "1. 在编辑器中输入 / 打开宏菜单\n2. 搜索需要的宏（如 Table of Contents, Code Block, Info Panel）\n3. 点击插入\n4. 配置宏参数\n5. 点击 Publish 保存",
-      "selectors": [".editor-insert-menu"],
+      "selectors": [
+        ".editor-insert-menu"
+      ],
       "url_pattern": "*.atlassian.net/wiki/*"
+    },
+    {
+      "question": "怎么创建页面？",
+      "answer": "1. 点击左侧 + Create\n2. 选择空间和模板\n3. 输入标题\n4. 使用编辑器添加内容\n5. 点击 Publish 发布",
+      "selectors": [
+        "[data-testid='create-page']",
+        "#create-page-button"
+      ],
+      "url_pattern": "atlassian.net/*"
+    },
+    {
+      "question": "怎么使用宏？",
+      "answer": "1. 输入 / 触发宏菜单\n2. 搜索宏（如 Table of Contents、Code Block）\n3. 点击插入宏\n4. 配置宏参数\n5. 预览效果后发布",
+      "selectors": [
+        "[data-testid='macro-browser']",
+        ".macro-browser"
+      ],
+      "url_pattern": "atlassian.net/*"
+    },
+    {
+      "question": "怎么设置页面权限？",
+      "answer": "1. 点击右上角 ... → Restrictions\n2. 选择限制类型\n3. 添加允许查看/编辑的用户\n4. 设置继承关系\n5. 保存权限设置",
+      "selectors": [
+        "[data-testid='page-restrictions']",
+        ".restrictions"
+      ],
+      "url_pattern": "atlassian.net/*"
+    },
+    {
+      "question": "怎么使用评论？",
+      "answer": "1. 选中文本后点击评论图标\n2. 输入评论内容\n3. 可以 @ 提及同事\n4. 评论会锚定在具体段落\n5. 解决后可标记为已解决",
+      "selectors": [
+        "[data-testid='inline-comment']",
+        ".comment-marker"
+      ],
+      "url_pattern": "atlassian.net/*"
     }
   ]
 }

@@ -5,13 +5,52 @@
     {
       "question": "怎么创建团队？",
       "answer": "1. 点击左侧 Teams 图标\n2. 点击 Join or create a team\n3. 点击 Create team\n4. 输入团队名称和描述\n5. 选择隐私级别\n6. 添加成员",
-      "selectors": ["[aria-label='Create a team']"],
+      "selectors": [
+        "[aria-label='Create a team']"
+      ],
       "url_pattern": "teams.microsoft.com/*"
     },
     {
       "question": "怎么发起视频会议？",
       "answer": "1. 点击左侧 Calendar\n2. 点击 New meeting\n3. 填写标题、时间、参与人\n4. 点击 Save\n5. 或直接点击 Meet now 立即开会",
-      "selectors": ["[aria-label='New meeting']"],
+      "selectors": [
+        "[aria-label='New meeting']"
+      ],
+      "url_pattern": "teams.microsoft.com/*"
+    },
+    {
+      "question": "怎么创建团队？",
+      "answer": "1. 左侧边栏 Teams 点击 Join or create a team\n2. 点击 Create a team\n3. 选择团队类型\n4. 输入团队名称和描述\n5. 添加成员后点击 Create",
+      "selectors": [
+        "[data-testid='create-team']",
+        ".team-create"
+      ],
+      "url_pattern": "teams.microsoft.com/*"
+    },
+    {
+      "question": "怎么安排会议？",
+      "answer": "1. 左侧日历图标\n2. 点击 New meeting\n3. 设置标题/时间/参与人\n4. 添加会议详情\n5. 点击 Send 发送邀请",
+      "selectors": [
+        "[data-testid='schedule-meeting']",
+        ".meeting-btn"
+      ],
+      "url_pattern": "teams.microsoft.com/*"
+    },
+    {
+      "question": "怎么共享文件？",
+      "answer": "1. 进入团队频道\n2. 点击 Files 标签\n3. 点击 Upload 上传文件\n4. 或直接拖拽文件到聊天\n5. 可以在线编辑 Office 文档",
+      "selectors": [
+        "[data-testid='files']",
+        ".files-tab"
+      ],
+      "url_pattern": "teams.microsoft.com/*"
+    },
+    {
+      "question": "怎么使用 Together Mode？",
+      "answer": "1. 在会议中点击更多选项\n2. 选择 Together Mode\n3. 所有参与者被放置在虚拟场景中\n4. 可以选择不同的背景\n5. 再次点击可退出",
+      "selectors": [
+        "[data-testid='together-mode']"
+      ],
       "url_pattern": "teams.microsoft.com/*"
     }
   ]

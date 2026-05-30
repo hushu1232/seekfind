@@ -52,3 +52,7 @@ models/*.bin
 # Extension build output
 extension/dist/
 extension/*.zip
+
+# Runtime data
+backend/data/
+data/

@@ -31,6 +31,36 @@
       "answer": "1. 进入仓库的 Issues 标签页\n2. 点击 New issue 按钮\n3. 填写标题和描述\n4. 可选：添加标签、指派人员、关联项目\n5. 点击 Submit new issue",
       "selectors": ["#new_issue", "[data-testid='new-issue-button']"],
       "url_pattern": "github.com/*/issues*"
+    },
+    {
+      "question": "怎么 Review Pull Request？",
+      "answer": "1. 打开 PR 页面，查看 Files changed 标签\n2. 点击代码行左侧 + 号添加评论\n3. 在评论框中输入 review 意见\n4. 可选：点击 Suggestions 图标插入代码建议\n5. 完成后点击 Review changes 按钮\n6. 选择 Approve（通过）、Request changes（要求修改）或 Comment（仅评论）",
+      "selectors": ["[data-testid='review-changes-button']", "#review-changes-modal"],
+      "url_pattern": "github.com/*/*/pull/*"
+    },
+    {
+      "question": "怎么配置 Branch Protection？",
+      "answer": "1. 进入仓库 Settings > Branches\n2. 点击 Add rule 按钮\n3. 输入分支名称模式（如 main）\n4. 勾选保护规则：Require pull request、Require status checks、Require signed commits 等\n5. 点击 Create 按钮保存",
+      "selectors": ["[data-testid='branch-protection']", "a[href*='/settings/branches']"],
+      "url_pattern": "github.com/*/*/settings/branches*"
+    },
+    {
+      "question": "怎么使用 GitHub Pages 部署网站？",
+      "answer": "1. 进入仓库 Settings > Pages\n2. Source 选择 Deploy from a branch\n3. 选择分支（如 main）和目录（如 /docs 或 /root）\n4. 点击 Save\n5. 等待几分钟后访问 https://username.github.io/repo-name",
+      "selectors": ["[data-testid='pages-settings']", "a[href*='/settings/pages']"],
+      "url_pattern": "github.com/*/*/settings/pages*"
+    },
+    {
+      "question": "怎么管理仓库 Secrets？",
+      "answer": "1. 进入仓库 Settings > Secrets and variables > Actions\n2. 点击 New repository secret\n3. 输入 Secret 名称（如 API_KEY）\n4. 输入 Secret 值\n5. 点击 Add secret\n6. 在 Actions 工作流中使用 ${{ secrets.API_KEY }} 引用",
+      "selectors": ["[data-testid='secrets']", "a[href*='/settings/secrets']"],
+      "url_pattern": "github.com/*/*/settings/secrets*"
+    },
+    {
+      "question": "怎么创建 Release？",
+      "answer": "1. 进入仓库的 Releases 页面\n2. 点击 Draft a new release\n3. 选择或创建 tag（如 v1.0.0）\n4. 填写 Release title 和描述\n5. 可选：上传二进制文件\n6. 点击 Publish release",
+      "selectors": ["[data-testid='create-release']", "a[href*='/releases/new']"],
+      "url_pattern": "github.com/*/*/releases*"
     }
   ]
 }

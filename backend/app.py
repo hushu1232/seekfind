@@ -28,6 +28,7 @@ from agent import QiuWenAgent
 from memory.short_term import ShortTermMemory
 from indexer.build_index import IndexBuilder
 from indexer.crawler import CrawledDoc
+from browser.controller import browser_controller
 from schemas import (
     UserMessage, PageEventMessage, FeedbackMessage, AudioMessage,
     ModelConfigUpdate, IndexUrlRequest, IndexTextRequest,
@@ -66,6 +67,56 @@ app = FastAPI(
 @app.get("/health")
 async def health():
     return {"status": "ok", "model_strategy": settings.model_strategy.value}
+
+
+@app.get("/api/status")
+async def system_status():
+    """系统状态：各模块在线/离线状态。"""
+    status = {
+        "ollama": False,
+        "chroma": False,
+        "tts": False,
+        "asr": False,
+        "vision": False,
+        "fingerprint_storage": False,
+    }
+
+    # 检测 Ollama
+    try:
+        import httpx
+        async with httpx.AsyncClient(timeout=3) as client:
+            resp = await client.get(f"{settings.ollama_base_url.replace('/v1', '')}/api/tags")
+            status["ollama"] = resp.status_code == 200
+    except Exception:
+        pass
+
+    # 检测 Chroma
+    if agent and agent._long_term:
+        status["chroma"] = agent._long_term.is_healthy
+
+    # 检测 TTS
+    try:
+        from voice.tts import tts_service
+        status["tts"] = tts_service._use_edge_tts or tts_service._engine is not None
+    except Exception:
+        pass
+
+    # 检测 ASR
+    try:
+        from voice.asr import asr_service
+        status["asr"] = asr_service._model is not None
+    except Exception:
+        pass
+
+    # 检测视觉模型
+    if agent and agent._vision_model:
+        status["vision"] = True
+
+    # 检测指纹存储
+    if agent and agent._fingerprint_storage:
+        status["fingerprint_storage"] = True
+
+    return status
 
 
 # ---------------------------------------------------------------------------
@@ -153,6 +204,9 @@ async def websocket_chat(ws: WebSocket):
     try:
         await ws.send_json({"type": "session_created", "session_id": session_id})
 
+        # 设置浏览器控制器的 WS 连接
+        browser_controller.set_ws(ws)
+
         while True:
             raw = await ws.receive_text()
             try:
@@ -162,6 +216,11 @@ async def websocket_chat(ws: WebSocket):
                 continue
 
             msg_type = msg.get("type", "")
+
+            # --- 浏览器控制响应（优先处理）---
+            if msg_type in ("snapshot_result", "interaction_result", "find_result"):
+                browser_controller.handle_response(msg)
+                continue
 
             # --- 心跳 ---
             if msg_type == "ping":
@@ -224,6 +283,50 @@ async def websocket_chat(ws: WebSocket):
                     session.add("user", asr_result["text"])
                     async for chunk in agent.stream_reply(text=asr_result["text"], session=session):
                         await ws.send_json(chunk)
+
+            # --- 操作流：实时步骤上报 ---
+            elif msg_type == "flow_step":
+                step = msg.get("step", {})
+                from tools.learn_flow import learn_flow_tool
+                learn_flow_tool.add_step(
+                    action=step.get("action", "click"),
+                    selector=step.get("selector", ""),
+                    description=step.get("description", ""),
+                    value=step.get("value", ""),
+                )
+                logger.debug("操作流步骤已记录", action=step.get("action"), selector=step.get("selector"))
+
+            # --- 操作流：控制指令 ---
+            elif msg_type == "flow_action":
+                action = msg.get("action", "")
+                flow_name = msg.get("flow_name", "")
+                from tools.learn_flow import learn_flow_tool
+
+                if action == "start_recording":
+                    result = await learn_flow_tool.execute("start_recording", flow_name)
+                    await ws.send_json({"type": "flow_status", "result": json.loads(result)})
+                elif action == "stop_recording":
+                    result = await learn_flow_tool.execute("stop_recording")
+                    await ws.send_json({"type": "flow_status", "result": json.loads(result)})
+                elif action == "replay":
+                    result = await learn_flow_tool.execute("replay", flow_name)
+                    data = json.loads(result)
+                    # 将回放的 steps 转为高亮指令下发
+                    if "flow" in data and "steps" in data["flow"]:
+                        for step in data["flow"]["steps"]:
+                            await ws.send_json({
+                                "type": "highlight",
+                                "selector": step.get("selector", ""),
+                                "description": step.get("description", ""),
+                                "order": step.get("order", 1),
+                                "style": "pulse",
+                            })
+                    await ws.send_json({"type": "flow_status", "result": data})
+                elif action == "list":
+                    result = await learn_flow_tool.execute("list")
+                    await ws.send_json({"type": "flow_status", "result": json.loads(result)})
+                else:
+                    await ws.send_json({"type": "error", "message": f"未知操作流动作: {action}"})
 
             else:
                 await ws.send_json({"type": "error", "message": f"未知消息类型: {msg_type}"})

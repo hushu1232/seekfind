@@ -5,13 +5,53 @@
     {
       "question": "怎么发起会议？",
       "answer": "1. 打开 Zoom 应用\n2. 点击 New Meeting\n3. 选择是否使用视频\n4. 邀请参与者：点击 Participants → Invite\n5. 复制邀请链接发给参会人",
-      "selectors": ["[aria-label='New Meeting']"],
+      "selectors": [
+        "[aria-label='New Meeting']"
+      ],
       "url_pattern": "zoom.us/*"
     },
     {
       "question": "怎么共享屏幕？",
       "answer": "1. 在会议中点击底部 Share Screen\n2. 选择共享内容（整个屏幕/窗口/白板）\n3. 点击 Share\n4. 共享时可开启远程控制\n5. 点击 Stop Share 结束共享",
-      "selectors": ["[aria-label='Share Screen']"],
+      "selectors": [
+        "[aria-label='Share Screen']"
+      ],
+      "url_pattern": "zoom.us/*"
+    },
+    {
+      "question": "怎么加入会议？",
+      "answer": "1. 点击会议链接\n2. 或打开 Zoom 客户端点击 Join\n3. 输入会议 ID 和密码\n4. 设置音频/视频选项\n5. 点击 Join",
+      "selectors": [
+        "[data-testid='join-meeting']",
+        ".join-btn"
+      ],
+      "url_pattern": "zoom.us/*"
+    },
+    {
+      "question": "怎么共享屏幕？",
+      "answer": "1. 在会议中点击 Share Screen\n2. 选择要共享的窗口或整个屏幕\n3. 可选：共享电脑声音\n4. 点击 Share\n5. 点击 Stop Share 停止",
+      "selectors": [
+        "[data-testid='screen-share']",
+        ".share-btn"
+      ],
+      "url_pattern": "zoom.us/*"
+    },
+    {
+      "question": "怎么录制会议？",
+      "answer": "1. 在会议中点击 Record\n2. 选择 Record on this computer 或 Record to the cloud\n3. 录制中会显示红点指示\n4. 点击 Stop Recording 停止\n5. 会议结束后自动转换为 MP4",
+      "selectors": [
+        "[data-testid='record']",
+        ".record-btn"
+      ],
+      "url_pattern": "zoom.us/*"
+    },
+    {
+      "question": "怎么设置虚拟背景？",
+      "answer": "1. 点击视频按钮旁的箭头\n2. 选择 Virtual Background\n3. 选择预设背景或上传自定义图片\n4. 可选：启用绿幕模式\n5. 关闭设置即生效",
+      "selectors": [
+        "[data-testid='virtual-bg']",
+        ".bg-settings"
+      ],
       "url_pattern": "zoom.us/*"
     }
   ]

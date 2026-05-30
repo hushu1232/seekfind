@@ -16,6 +16,7 @@ import { INTERNAL_MSG } from "../common/constants";
 import type { PageEvent } from "../common/types";
 import { injectAtStart } from "../common/browser-compat";
 import { sanitizeText, isPasswordField } from "./privacy";
+import { takeSnapshot, findElement, executeInteraction } from "./snapshot";
 
 injectAtStart(() => {
   // -----------------------------------------------------------------------
@@ -81,6 +82,37 @@ injectAtStart(() => {
       });
       console.log("[求问] 操作流录制已停止", { steps: recordedSteps.length });
     }
+
+    // 浏览器控制：无障碍树快照
+    if (msg.type === INTERNAL_MSG.SNAPSHOT) {
+      const result = takeSnapshot(msg.options || {});
+      chrome.runtime.sendMessage({
+        type: INTERNAL_MSG.SNAPSHOT_RESULT,
+        ...result,
+      });
+    }
+
+    // 浏览器控制：语义查找
+    if (msg.type === INTERNAL_MSG.FIND_ELEMENT) {
+      const ref = findElement(msg.strategy, msg.value, msg.options || {});
+      chrome.runtime.sendMessage({
+        type: INTERNAL_MSG.FIND_RESULT,
+        ref,
+        strategy: msg.strategy,
+        value: msg.value,
+      });
+    }
+
+    // 浏览器控制：执行交互
+    if (msg.type === INTERNAL_MSG.EXECUTE_INTERACTION) {
+      const result = executeInteraction(msg.ref, msg.action, msg.value);
+      chrome.runtime.sendMessage({
+        type: INTERNAL_MSG.INTERACTION_RESULT,
+        ...result,
+        ref: msg.ref,
+        action: msg.action,
+      });
+    }
   });
 
   // -----------------------------------------------------------------------
@@ -111,13 +143,19 @@ injectAtStart(() => {
         target: selector,
       });
 
-      // 录制模式：记录步骤
+      // 录制模式：记录步骤 + 实时上报
       if (recordingMode) {
-        recordedSteps.push({
-          action: "click",
+        const step = {
+          action: "click" as const,
           selector,
           description: `点击 ${getElementDescription(target)}`,
           timestamp: now,
+        };
+        recordedSteps.push(step);
+        // 实时上报到后端
+        chrome.runtime.sendMessage({
+          type: "qiuwen:flow_step",
+          step,
         });
       }
 
@@ -167,14 +205,19 @@ injectAtStart(() => {
         value: safeValue,
       });
 
-      // 录制模式
+      // 录制模式：记录 + 实时上报
       if (recordingMode && safeValue) {
-        recordedSteps.push({
-          action: "input",
+        const step = {
+          action: "input" as const,
           selector,
           description: `在输入框中输入内容`,
           value: safeValue,
           timestamp: Date.now(),
+        };
+        recordedSteps.push(step);
+        chrome.runtime.sendMessage({
+          type: "qiuwen:flow_step",
+          step,
         });
       }
     },
@@ -195,13 +238,18 @@ injectAtStart(() => {
         url: lastUrl,
       });
 
-      // 录制模式
+      // 录制模式：记录 + 实时上报
       if (recordingMode) {
-        recordedSteps.push({
-          action: "navigate",
+        const step = {
+          action: "navigate" as const,
           selector: "",
           description: `导航到 ${lastUrl}`,
           timestamp: Date.now(),
+        };
+        recordedSteps.push(step);
+        chrome.runtime.sendMessage({
+          type: "qiuwen:flow_step",
+          step,
         });
       }
     }

@@ -5,20 +5,61 @@
     {
       "question": "怎么创建频道？",
       "answer": "1. 点击左侧边栏 Channels 旁边的 + 号\n2. 选择 Create a channel\n3. 输入频道名称（小写，无空格）\n4. 添加描述\n5. 选择公开或私有\n6. 添加成员\n7. 点击 Create",
-      "selectors": ["[data-testid='create-channel-button']"],
+      "selectors": [
+        "[data-testid='create-channel-button']"
+      ],
       "url_pattern": "app.slack.com/*"
     },
     {
       "question": "怎么发送消息？",
       "answer": "1. 在左侧选择频道或 DM\n2. 在底部输入框输入消息\n3. 按 Enter 发送\n4. Shift+Enter 换行\n5. 可以 @提人、添加表情、附加文件",
-      "selectors": ["[data-testid='message-input']"],
+      "selectors": [
+        "[data-testid='message-input']"
+      ],
       "url_pattern": "app.slack.com/*"
     },
     {
       "question": "怎么搜索消息？",
       "answer": "1. 点击顶部搜索栏（或 Ctrl+K）\n2. 输入关键词\n3. 使用过滤器：in:channel from:@user has:link\n4. 按 Enter 搜索",
-      "selectors": ["[data-testid='search-input']"],
+      "selectors": [
+        "[data-testid='search-input']"
+      ],
       "url_pattern": "app.slack.com/*"
+    },
+    {
+      "question": "怎么创建频道？",
+      "answer": "1. 左侧边栏 Channels 点击 +\n2. 选择 Create a channel\n3. 输入频道名称和描述\n4. 设置公开或私有\n5. 添加成员后点击 Create",
+      "selectors": [
+        "[data-testid='create-channel']",
+        ".channel-create"
+      ],
+      "url_pattern": "*.slack.com/*"
+    },
+    {
+      "question": "怎么使用线程回复？",
+      "answer": "1. 鼠标悬停在消息上\n2. 点击 Reply in thread 图标\n3. 在弹出的线程面板中输入回复\n4. 线程回复不会打扰主频道\n5. 可以在主频道查看线程摘要",
+      "selectors": [
+        "[data-testid='thread']",
+        ".thread-reply"
+      ],
+      "url_pattern": "*.slack.com/*"
+    },
+    {
+      "question": "怎么设置状态？",
+      "answer": "1. 点击左上角头像\n2. 点击 Set a status\n3. 选择表情和输入文字\n4. 设置清除时间\n5. 点击 Save",
+      "selectors": [
+        "[data-testid='status']",
+        ".status-btn"
+      ],
+      "url_pattern": "*.slack.com/*"
+    },
+    {
+      "question": "怎么使用快捷键？",
+      "answer": "1. Ctrl+K = 快速跳转\n2. Ctrl+N = 新消息\n3. Ctrl+Shift+K = 打开 DM 列表\n4. Ctrl+/ = 查看所有快捷键\n5. Ctrl+Shift+A = 标记所有已读",
+      "selectors": [
+        "[data-testid='shortcuts']"
+      ],
+      "url_pattern": "*.slack.com/*"
     }
   ]
 }

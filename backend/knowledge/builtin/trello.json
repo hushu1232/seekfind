@@ -5,19 +5,26 @@
     {
       "question": "怎么创建看板？",
       "answer": "1. 点击左侧 Create new board\n2. 输入看板名称\n3. 选择背景颜色\n4. 选择可见范围（私有/团队/公开）\n5. 点击 Create board",
-      "selectors": ["[data-testid='create-board-tile']"],
+      "selectors": [
+        "[data-testid='create-board-tile']"
+      ],
       "url_pattern": "trello.com/*"
     },
     {
       "question": "怎么创建卡片？",
       "answer": "1. 在目标列表底部点击 + Add a card\n2. 输入卡片标题\n3. 点击 Add Card\n4. 点击卡片可添加描述、标签、成员、截止日期",
-      "selectors": ["[data-testid='list-add-card-button']"],
+      "selectors": [
+        "[data-testid='list-add-card-button']"
+      ],
       "url_pattern": "trello.com/*"
     },
     {
       "question": "怎么移动卡片？",
       "answer": "1. 拖拽卡片到目标列表\n2. 或点击卡片 → Move → 选择目标列表和位置\n3. 也可以用快捷键：选中卡片后按 M 打开移动面板",
-      "selectors": [],
+      "selectors": [
+        "[data-testid='board']",
+        ".board-view"
+      ],
       "url_pattern": "trello.com/*"
     }
   ]

@@ -6,6 +6,7 @@
   1. 增量索引：用 URL + content hash 判断是否需要更新，跳过已索引的文档
   2. 智能分块：优先按段落（\\n\\n）分割，其次按句子边界，最后才用固定字符切割
   3. 去重：md5(url + chunk_text) 作为 chunk ID，相同内容不重复写入
+  4. 流水线化：build_from_url_streaming 爬一页索引一页，减少内存占用
 
 分块策略（优化后）：
   优先级 1: 按 \\n\\n 段落分割（保留完整段落语义）
@@ -112,11 +113,73 @@ class IndexBuilder:
         return chunks
 
     async def build_from_url(self, url: str, long_term_memory) -> int:
-        """从 URL 爬取并构建索引。"""
+        """从 URL 爬取并构建索引（批量模式）。"""
         from indexer.crawler import DocCrawler
         crawler = DocCrawler()
         docs = await crawler.crawl(url)
         return await self.build_from_docs(docs, long_term_memory)
+
+    async def build_from_url_streaming(self, url: str, long_term_memory, max_pages: int = 100) -> int:
+        """
+        从 URL 爬取并构建索引（流水线模式）。
+
+        与 build_from_url 的区别：
+          - build_from_url: 爬取全部 → 索引全部（内存占用高）
+          - build_from_url_streaming: 爬一页 → 索引一页 → 爬下一页（内存友好）
+
+        Args:
+            url: 起始 URL
+            long_term_memory: LongTermMemory 实例
+            max_pages: 最大爬取页数
+
+        Returns:
+            总索引的 chunk 数量
+        """
+        from indexer.crawler import DocCrawler
+        from urllib.parse import urlparse
+
+        crawler = DocCrawler(max_pages=max_pages)
+        base_domain = urlparse(url).netloc
+        queue = [(url, 0)]
+        visited = set()
+        total_chunks = 0
+
+        while queue:
+            page_url, depth = queue.pop(0)
+            if page_url in visited or depth > crawler.max_depth:
+                continue
+            visited.add(page_url)
+
+            # 爬取单页
+            try:
+                doc = await crawler._fetcher.fetch(page_url)
+                doc.depth = depth
+            except Exception as e:
+                logger.warning("爬取失败", url=page_url, error=str(e))
+                continue
+
+            # 立即索引
+            if doc.text:
+                chunks = self.chunk_document(doc)
+                new_count = await self._index_chunks(chunks, long_term_memory)
+                total_chunks += new_count
+                logger.info(
+                    "页面已索引",
+                    url=page_url,
+                    new_chunks=new_count,
+                    total=total_chunks,
+                    depth=depth,
+                )
+
+            # 提取链接继续
+            if depth < crawler.max_depth and doc.html:
+                links = crawler._extract_links(doc.html, base_domain)
+                for link in links:
+                    if link not in visited:
+                        queue.append((link, depth + 1))
+
+        logger.info("流水线索引完成", total_chunks=total_chunks, pages=len(visited))
+        return total_chunks
 
     async def build_from_docs(self, docs: list[CrawledDoc], long_term_memory) -> int:
         """
@@ -136,21 +199,32 @@ class IndexBuilder:
             logger.warning("无有效文档块")
             return 0
 
+        return await self._index_chunks(all_chunks, long_term_memory)
+
+    async def _index_chunks(self, chunks: list[dict], long_term_memory) -> int:
+        """
+        将 chunks 写入 Chroma（增量）。
+
+        增量逻辑：检查已存在的 ID，只写入新 chunk。
+        """
+        if not chunks:
+            return 0
+
         # 检查已存在的 chunk（增量过滤）
         existing_ids = set()
         try:
             coll = long_term_memory._collections.get("docs")
             if coll:
-                existing = coll.get(ids=[c["id"] for c in all_chunks])
+                existing = coll.get(ids=[c["id"] for c in chunks])
                 existing_ids = set(existing.get("ids", []))
         except Exception:
             pass
 
         # 过滤出新 chunk
-        new_chunks = [c for c in all_chunks if c["id"] not in existing_ids]
+        new_chunks = [c for c in chunks if c["id"] not in existing_ids]
 
         if not new_chunks:
-            logger.info("所有文档块已存在，跳过索引", total=len(all_chunks))
+            logger.debug("所有文档块已存在，跳过索引", total=len(chunks))
             return 0
 
         # 写入新 chunk
@@ -161,11 +235,10 @@ class IndexBuilder:
             ids=[c["id"] for c in new_chunks],
         )
 
-        logger.info(
-            "索引构建完成",
+        logger.debug(
+            "索引写入完成",
             new_chunks=len(new_chunks),
-            skipped=len(all_chunks) - len(new_chunks),
-            docs=len(docs),
+            skipped=len(chunks) - len(new_chunks),
         )
         return len(new_chunks)
 
@@ -201,25 +274,4 @@ class IndexBuilder:
         if not all_chunks:
             return 0
 
-        # 增量检查
-        existing_ids = set()
-        try:
-            coll = long_term_memory._collections.get("docs")
-            if coll:
-                existing = coll.get(ids=[c["id"] for c in all_chunks])
-                existing_ids = set(existing.get("ids", []))
-        except Exception:
-            pass
-
-        new_chunks = [c for c in all_chunks if c["id"] not in existing_ids]
-
-        if new_chunks:
-            await long_term_memory.add(
-                collection="docs",
-                texts=[c["text"] for c in new_chunks],
-                metadatas=[c["metadata"] for c in new_chunks],
-                ids=[c["id"] for c in new_chunks],
-            )
-
-        logger.info("内置常识库索引完成", new=len(new_chunks), skipped=len(all_chunks) - len(new_chunks))
-        return len(new_chunks)
+        return await self._index_chunks(all_chunks, long_term_memory)

@@ -5,20 +5,62 @@
     {
       "question": "怎么创建群聊？",
       "answer": "1. 点击右上角 +\n2. 选择 发起群聊\n3. 选择群成员\n4. 设置群名称\n5. 点击确定",
-      "selectors": ["[data-testid='create-group']"],
+      "selectors": [
+        "[data-testid='create-group']"
+      ],
       "url_pattern": "work.weixin.qq.com/*"
     },
     {
       "question": "怎么提交审批？",
       "answer": "1. 点击底部工作台\n2. 找到审批应用\n3. 选择审批类型（请假/报销/出差）\n4. 填写表单\n5. 选择审批人\n6. 点击提交",
-      "selectors": ["[data-testid='approval-submit']"],
+      "selectors": [
+        "[data-testid='approval-submit']"
+      ],
       "url_pattern": "work.weixin.qq.com/*"
     },
     {
       "question": "怎么发红包？",
       "answer": "1. 在聊天窗口点击 +\n2. 选择红包\n3. 输入金额和个数\n4. 选择红包类型（普通/拼手气）\n5. 填写祝福语\n6. 点击塞钱进红包",
-      "selectors": ["[data-testid='red-packet']"],
+      "selectors": [
+        "[data-testid='red-packet']"
+      ],
       "url_pattern": "work.weixin.qq.com/*"
+    },
+    {
+      "question": "怎么创建汇报？",
+      "answer": "1. 工作台 → 汇报\n2. 选择汇报类型（日报/周报/月报）\n3. 填写汇报内容\n4. 选择汇报对象\n5. 点击提交",
+      "selectors": [
+        "[data-testid='report']",
+        ".report-btn"
+      ],
+      "url_pattern": ""
+    },
+    {
+      "question": "怎么使用审批？",
+      "answer": "1. 工作台 → 审批\n2. 选择审批类型（请假/报销/出差等）\n3. 填写表单内容\n4. 选择审批人\n5. 提交审批",
+      "selectors": [
+        "[data-testid='approval']",
+        ".approval-btn"
+      ],
+      "url_pattern": ""
+    },
+    {
+      "question": "怎么管理通讯录？",
+      "answer": "1. 管理后台 → 通讯录管理\n2. 添加/编辑/删除成员\n3. 创建部门结构\n4. 设置成员角色\n5. 批量导入成员",
+      "selectors": [
+        "[data-testid='contacts']",
+        ".contacts-btn"
+      ],
+      "url_pattern": ""
+    },
+    {
+      "question": "怎么使用微盘？",
+      "answer": "1. 工作台 → 微盘\n2. 创建文件夹整理文件\n3. 上传文件\n4. 设置共享权限\n5. 支持在线预览和编辑",
+      "selectors": [
+        "[data-testid='disk']",
+        ".disk-btn"
+      ],
+      "url_pattern": ""
     }
   ]
 }
