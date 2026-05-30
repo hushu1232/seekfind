@@ -106,7 +106,8 @@ class TestAgentModelSelection:
 class TestHighlightCommandExtraction:
     """高亮指令解析测试。"""
 
-    def test_extract_from_json_response(self):
+    @pytest.mark.asyncio
+    async def test_extract_from_json_response(self):
         """从 JSON 格式回复中提取高亮指令。"""
         agent = QiuWenAgent()
         response = '''
@@ -120,24 +121,26 @@ class TestHighlightCommandExtraction:
         }
         '''
 
-        commands = list(agent._extract_highlight_commands(response))
+        commands = [c async for c in agent._process_guide_steps(response)]
         assert len(commands) == 2
         assert commands[0]["type"] == "highlight"
         assert commands[0]["selector"] == "#new-btn"
         assert commands[1]["selector"] == "#name-input"
 
-    def test_extract_no_json(self):
+    @pytest.mark.asyncio
+    async def test_extract_no_json(self):
         """无 JSON 时返回空。"""
         agent = QiuWenAgent()
         response = "这是一段普通文本回复。"
-        commands = list(agent._extract_highlight_commands(response))
+        commands = [c async for c in agent._process_guide_steps(response)]
         assert len(commands) == 0
 
-    def test_extract_invalid_json(self):
+    @pytest.mark.asyncio
+    async def test_extract_invalid_json(self):
         """无效 JSON 时返回空。"""
         agent = QiuWenAgent()
         response = "这不是有效的 JSON {broken"
-        commands = list(agent._extract_highlight_commands(response))
+        commands = [c async for c in agent._process_guide_steps(response)]
         assert len(commands) == 0
 
 
