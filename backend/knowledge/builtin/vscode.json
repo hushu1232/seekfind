@@ -1,0 +1,36 @@
+{
+  "product": "VS Code",
+  "version": "2026",
+  "entries": [
+    {
+      "question": "怎么安装扩展？",
+      "answer": "1. 点击左侧活动栏的扩展图标（或按 Ctrl+Shift+X）\n2. 在搜索框中输入扩展名称\n3. 在搜索结果中找到目标扩展\n4. 点击 Install 按钮\n5. 安装完成后可能需要重启 VS Code",
+      "selectors": [".extension-action .install-button", "[aria-label='Install']"],
+      "url_pattern": "vscode://*"
+    },
+    {
+      "question": "怎么打开终端？",
+      "answer": "1. 使用快捷键 Ctrl+`（反引号键）\n2. 或者点击顶部菜单 Terminal > New Terminal\n3. 终端会出现在编辑器底部面板",
+      "selectors": ["#terminal", "[class*='terminal']"],
+      "url_pattern": "vscode://*"
+    },
+    {
+      "question": "怎么调试代码？",
+      "answer": "1. 在代码行号左侧点击设置断点（红色圆点）\n2. 按 F5 启动调试\n3. 选择调试环境（如 Node.js、Python 等）\n4. 使用调试工具栏：继续(F5)、单步跳过(F10)、单步进入(F11)、单步跳出(Shift+F11)\n5. 在左侧变量面板查看变量值",
+      "selectors": ["#debug", "[class*='debug-toolbar']"],
+      "url_pattern": "vscode://*"
+    },
+    {
+      "question": "怎么格式化代码？",
+      "answer": "1. 使用快捷键 Shift+Alt+F（Windows/Linux）或 Shift+Option+F（Mac）\n2. 或者右键选择 Format Document\n3. 也可以在设置中开启保存时自动格式化：editor.formatOnSave",
+      "selectors": ["[command='editor.action.formatDocument']"],
+      "url_pattern": "vscode://*"
+    },
+    {
+      "question": "怎么搜索和替换？",
+      "answer": "1. 按 Ctrl+H 打开搜索替换面板\n2. 在搜索框输入要查找的内容\n3. 在替换框输入替换内容\n4. 点击单个替换（→箭头）或全部替换\n5. 支持正则表达式：点击 .* 图标启用",
+      "selectors": [".search-replace", "[class*='findWidget']"],
+      "url_pattern": "vscode://*"
+    }
+  ]
+}

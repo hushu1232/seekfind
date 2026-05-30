@@ -1,0 +1,36 @@
+{
+  "product": "GitHub",
+  "version": "2026",
+  "entries": [
+    {
+      "question": "怎么创建新仓库？",
+      "answer": "1. 登录 GitHub 后，点击右上角 + 号\n2. 选择 New repository\n3. 填写仓库名称（如 my-project）\n4. 选择 Public 或 Private\n5. 可选：勾选 Initialize this repository with a README\n6. 点击 Create repository 按钮",
+      "selectors": ["[data-testid='new-repo-button']", "a[href='/new']", "summary.btn-primary"],
+      "url_pattern": "github.com/*"
+    },
+    {
+      "question": "怎么提交 Pull Request？",
+      "answer": "1. Fork 目标仓库到自己的账号\n2. 克隆 Fork 后的仓库到本地\n3. 创建新分支：git checkout -b feature/my-change\n4. 修改代码并提交：git add . && git commit -m '描述'\n5. 推送分支：git push origin feature/my-change\n6. 在 GitHub 上点击 Compare & pull request\n7. 填写 PR 描述，点击 Create pull request",
+      "selectors": ["#new_pull_request", "[data-testid='pr-button']"],
+      "url_pattern": "github.com/*/*/pull*"
+    },
+    {
+      "question": "怎么设置 GitHub Actions？",
+      "answer": "1. 在仓库中创建 .github/workflows/ 目录\n2. 在该目录下创建 YAML 文件（如 ci.yml）\n3. 编写工作流配置（name, on, jobs 等）\n4. 提交并推送到仓库\n5. 在仓库的 Actions 标签页查看运行状态",
+      "selectors": ["#actions-tab", "a[href*='/actions']"],
+      "url_pattern": "github.com/*/*"
+    },
+    {
+      "question": "怎么 Fork 一个仓库？",
+      "answer": "1. 打开要 Fork 的仓库页面\n2. 点击右上角的 Fork 按钮\n3. 选择要 Fork 到的账号/组织\n4. 等待 Fork 完成",
+      "selectors": ["#fork-button", "[data-testid='fork-button']", "button[aria-label='Fork']"],
+      "url_pattern": "github.com/*/*"
+    },
+    {
+      "question": "怎么创建 Issue？",
+      "answer": "1. 进入仓库的 Issues 标签页\n2. 点击 New issue 按钮\n3. 填写标题和描述\n4. 可选：添加标签、指派人员、关联项目\n5. 点击 Submit new issue",
+      "selectors": ["#new_issue", "[data-testid='new-issue-button']"],
+      "url_pattern": "github.com/*/issues*"
+    }
+  ]
+}

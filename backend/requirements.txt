@@ -1,0 +1,19 @@
+# ============================================================
+#  求问 — 后端依赖锁定
+# ============================================================
+fastapi==0.115.*
+uvicorn[standard]==0.34.*
+websockets==14.*
+langgraph==0.3.*
+langchain-core==0.3.*
+langchain-openai==0.3.*
+chromadb==0.6.*
+rank-bm25==0.2.*
+jieba==0.42.*
+httpx==0.28.*
+trafilatura==1.12.*
+pydantic-settings==2.*
+structlog==24.*
+Pillow==11.*
+ollama==0.4.*
+python-multipart==0.0.*

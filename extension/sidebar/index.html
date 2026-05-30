@@ -1,0 +1,229 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>求问</title>
+  <style>
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+
+    :root {
+      --primary: #4A90D9;
+      --primary-light: #6BA5E7;
+      --bg: #f8f9fa;
+      --bg-white: #ffffff;
+      --text: #1a1a2e;
+      --text-secondary: #6c757d;
+      --border: #e9ecef;
+      --success: #28a745;
+      --danger: #dc3545;
+    }
+
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", system-ui, sans-serif;
+      background: var(--bg);
+      color: var(--text);
+      height: 100vh;
+      display: flex;
+      flex-direction: column;
+      overflow: hidden;
+    }
+
+    /* --- 顶部栏 --- */
+    .header {
+      padding: 12px 16px;
+      background: var(--bg-white);
+      border-bottom: 1px solid var(--border);
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+    .header h1 {
+      font-size: 16px;
+      font-weight: 600;
+    }
+    .header .status {
+      margin-left: auto;
+      width: 8px;
+      height: 8px;
+      border-radius: 50%;
+      background: var(--danger);
+    }
+    .header .status.connected {
+      background: var(--success);
+    }
+
+    /* --- 球体区域 --- */
+    #ball-container {
+      height: 200px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      background: linear-gradient(135deg, #e8f0fe 0%, #f0f4ff 100%);
+      border-bottom: 1px solid var(--border);
+      position: relative;
+    }
+    #ball-container .skeleton-ball {
+      width: 80px;
+      height: 80px;
+      border-radius: 50%;
+      background: linear-gradient(135deg, var(--primary) 0%, var(--primary-light) 100%);
+      animation: skeleton-pulse 2s ease-in-out infinite;
+    }
+    @keyframes skeleton-pulse {
+      0%, 100% { transform: scale(1); opacity: 0.8; }
+      50% { transform: scale(1.05); opacity: 1; }
+    }
+
+    /* --- 消息区域 --- */
+    .messages {
+      flex: 1;
+      overflow-y: auto;
+      padding: 16px;
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+    }
+
+    .message {
+      max-width: 85%;
+      padding: 10px 14px;
+      border-radius: 12px;
+      font-size: 14px;
+      line-height: 1.5;
+      word-break: break-word;
+    }
+    .message.user {
+      align-self: flex-end;
+      background: var(--primary);
+      color: white;
+      border-bottom-right-radius: 4px;
+    }
+    .message.assistant {
+      align-self: flex-start;
+      background: var(--bg-white);
+      border: 1px solid var(--border);
+      border-bottom-left-radius: 4px;
+    }
+    .message.assistant.thinking {
+      color: var(--text-secondary);
+      font-style: italic;
+    }
+
+    /* --- 步骤卡片 --- */
+    .step-card {
+      background: var(--bg-white);
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      padding: 12px;
+      margin-top: 8px;
+    }
+    .step-card .step-header {
+      font-size: 13px;
+      color: var(--primary);
+      font-weight: 600;
+      margin-bottom: 6px;
+    }
+    .step-card .step-desc {
+      font-size: 14px;
+      margin-bottom: 10px;
+    }
+    .step-card .feedback-btns {
+      display: flex;
+      gap: 8px;
+    }
+    .step-card .feedback-btns button {
+      flex: 1;
+      padding: 6px;
+      border: 1px solid var(--border);
+      border-radius: 6px;
+      background: var(--bg-white);
+      cursor: pointer;
+      font-size: 13px;
+      transition: all 0.15s;
+    }
+    .step-card .feedback-btns button:hover {
+      background: var(--bg);
+    }
+    .step-card .feedback-btns .btn-correct {
+      color: var(--success);
+      border-color: var(--success);
+    }
+    .step-card .feedback-btns .btn-wrong {
+      color: var(--danger);
+      border-color: var(--danger);
+    }
+
+    /* --- 输入区域 --- */
+    .input-area {
+      padding: 12px 16px;
+      background: var(--bg-white);
+      border-top: 1px solid var(--border);
+      display: flex;
+      gap: 8px;
+    }
+    .input-area input {
+      flex: 1;
+      padding: 10px 14px;
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      font-size: 14px;
+      outline: none;
+      transition: border-color 0.15s;
+    }
+    .input-area input:focus {
+      border-color: var(--primary);
+    }
+    .input-area button {
+      padding: 10px 16px;
+      background: var(--primary);
+      color: white;
+      border: none;
+      border-radius: 8px;
+      cursor: pointer;
+      font-size: 14px;
+      font-weight: 500;
+      transition: background 0.15s;
+    }
+    .input-area button:hover {
+      background: var(--primary-light);
+    }
+    .input-area button:disabled {
+      opacity: 0.5;
+      cursor: not-allowed;
+    }
+  </style>
+</head>
+<body>
+  <!-- 顶部栏 -->
+  <div class="header">
+    <span>🔮</span>
+    <h1>求问</h1>
+    <div class="status" id="ws-status"></div>
+  </div>
+
+  <!-- 球体区域 -->
+  <div id="ball-container">
+    <div class="skeleton-ball" id="skeleton-ball"></div>
+  </div>
+
+  <!-- 消息区域 -->
+  <div class="messages" id="messages">
+    <div class="message assistant">
+      👋 你好！我是求问，你的网页引导助手。有什么想问的？
+    </div>
+  </div>
+
+  <!-- 输入区域 -->
+  <div class="input-area">
+    <input type="text" id="user-input" placeholder="输入你的问题..." autocomplete="off">
+    <button id="send-btn">发送</button>
+  </div>
+
+  <script type="module" src="./panel.ts"></script>
+</body>
+</html>

@@ -1,0 +1,55 @@
+# ============================================================
+#  求问 — Docker Compose 编排
+#  两个服务：bff（后端）+ chroma（向量库）
+# ============================================================
+
+services:
+  # --- 后端 BFF 服务 ---
+  bff:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
+    container_name: qiuwen-bff
+    ports:
+      - "${BFF_PORT:-8700}:8700"
+    environment:
+      - BFF_PORT=8700
+      - OLLAMA_BASE_URL=${OLLAMA_BASE_URL:-http://host.docker.internal:11434/v1}
+      - OLLAMA_MODEL=${OLLAMA_MODEL:-qwen2.5:7b}
+      - OLLAMA_EMBEDDING_MODEL=${OLLAMA_EMBEDDING_MODEL:-nomic-embed-text}
+      - CHROMA_HOST=chroma
+      - CHROMA_PORT=8000
+      - MODEL_STRATEGY=${MODEL_STRATEGY:-hybrid}
+      - CLOUD_API_BASE_URL=${CLOUD_API_BASE_URL:-}
+      - CLOUD_API_KEY=${CLOUD_API_KEY:-}
+      - CLOUD_MODEL=${CLOUD_MODEL:-gpt-4o-mini}
+      - FALLBACK_THRESHOLD=${FALLBACK_THRESHOLD:-3}
+      - LOG_LEVEL=${LOG_LEVEL:-INFO}
+    volumes:
+      - ./backend/knowledge:/app/knowledge:ro
+    depends_on:
+      chroma:
+        condition: service_healthy
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
+    restart: unless-stopped
+
+  # --- Chroma 向量数据库 ---
+  chroma:
+    image: chromadb/chroma:latest
+    container_name: qiuwen-chroma
+    ports:
+      - "${CHROMA_PORT:-8000}:8000"
+    volumes:
+      - chroma_data:/chroma/chroma
+    environment:
+      - ANONYMIZED_TELEMETRY=false
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8000/api/v1/heartbeat"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    restart: unless-stopped
+
+volumes:
+  chroma_data:
