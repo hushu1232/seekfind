@@ -1,0 +1,24 @@
+{
+  "product": "钉钉",
+  "version": "2026",
+  "entries": [
+    {
+      "question": "怎么创建群聊？",
+      "answer": "1. 打开钉钉，点击右上角 +\n2. 选择 发起群聊\n3. 选择群成员\n4. 设置群名称\n5. 点击确定创建",
+      "selectors": ["[data-testid='create-group']"],
+      "url_pattern": "*.dingtalk.com/*"
+    },
+    {
+      "question": "怎么提交审批？",
+      "answer": "1. 打开钉钉，点击底部 工作台\n2. 找到 审批 应用\n3. 选择审批类型（请假/报销/出差等）\n4. 填写表单信息\n5. 选择审批人\n6. 点击提交",
+      "selectors": ["[data-testid='approval-submit']"],
+      "url_pattern": "*.dingtalk.com/*"
+    },
+    {
+      "question": "怎么查看考勤打卡？",
+      "answer": "1. 打开钉钉，点击底部 工作台\n2. 找到 考勤打卡 应用\n3. 查看今日打卡状态\n4. 点击 打卡 按钮进行打卡\n5. 可以查看历史打卡记录",
+      "selectors": ["[data-testid='attendance-clock']"],
+      "url_pattern": "*.dingtalk.com/*"
+    }
+  ]
+}

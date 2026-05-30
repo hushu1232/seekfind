@@ -1,0 +1,30 @@
+{
+  "product": "Chrome",
+  "version": "2026",
+  "entries": [
+    {
+      "question": "怎么清除浏览器缓存？",
+      "answer": "1. 按 Ctrl+Shift+Delete 打开清除数据面板\n2. 选择时间范围（建议选"所有时间"）\n3. 勾选 Cookie 和缓存的图片和文件\n4. 点击清除数据\n5. 或者：设置 → 隐私与安全 → 清除浏览数据",
+      "selectors": ["#clearBrowsingDataButton"],
+      "url_pattern": "chrome://settings/*"
+    },
+    {
+      "question": "怎么安装浏览器扩展？",
+      "answer": "1. 打开 Chrome 网上应用店（chrome.google.com/webstore）\n2. 搜索目标扩展\n3. 点击 添加到 Chrome\n4. 确认权限后点击 添加扩展程序\n5. 扩展图标会出现在工具栏",
+      "selectors": ["[aria-label='Add to Chrome']"],
+      "url_pattern": "chrome.google.com/webstore*"
+    },
+    {
+      "question": "怎么打开开发者工具？",
+      "answer": "1. 按 F12 或 Ctrl+Shift+I\n2. 或者右键页面 → 检查\n3. 开发者工具包含：Elements（DOM）、Console（日志）、Network（请求）、Sources（源码）\n4. 可以在 Console 中执行 JavaScript",
+      "selectors": [],
+      "url_pattern": ""
+    },
+    {
+      "question": "怎么管理扩展权限？",
+      "answer": "1. 地址栏输入 chrome://extensions\n2. 找到目标扩展，点击详情\n3. 可以设置：在所有网站上允许 / 在特定网站上允许\n4. 也可以在这里关闭或删除扩展",
+      "selectors": ["#extensionDetails"],
+      "url_pattern": "chrome://extensions/*"
+    }
+  ]
+}

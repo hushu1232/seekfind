@@ -1,0 +1,24 @@
+{
+  "product": "Figma",
+  "version": "2026",
+  "entries": [
+    {
+      "question": "怎么创建新项目？",
+      "answer": "1. 打开 Figma，点击 New design file\n2. 选择画板尺寸（如 iPhone 14 / Desktop）\n3. 使用左侧工具栏创建设计元素\n4. 使用右侧面板调整属性\n5. Ctrl+S 保存，自动云端同步",
+      "selectors": ["[data-testid='new-file-btn']"],
+      "url_pattern": "figma.com/*"
+    },
+    {
+      "question": "怎么创建组件？",
+      "answer": "1. 选中要转换为组件的元素\n2. 右键选择 Create component（或 Ctrl+Alt+K）\n3. 组件会出现在 Assets 面板中\n4. 拖拽组件到画板创建实例\n5. 修改主组件，所有实例自动更新",
+      "selectors": ["[data-testid='create-component']"],
+      "url_pattern": "figma.com/*"
+    },
+    {
+      "question": "怎么与开发协作？",
+      "answer": "1. 点右上角 Share 按钮\n2. 设置权限（Can view/Can edit）\n3. 复制链接发给开发\n4. 开发可以用 Dev Mode 查看 CSS/代码\n5. 开发可以直接复制样式代码",
+      "selectors": ["[data-testid='share-button']"],
+      "url_pattern": "figma.com/*"
+    }
+  ]
+}

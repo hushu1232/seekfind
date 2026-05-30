@@ -1,0 +1,24 @@
+{
+  "product": "Kubernetes",
+  "version": "2026",
+  "entries": [
+    {
+      "question": "怎么查看 Pod 状态？",
+      "answer": "1. 查看所有 Pod：kubectl get pods\n2. 查看指定命名空间：kubectl get pods -n <namespace>\n3. 查看详细信息：kubectl describe pod <pod-name>\n4. 查看日志：kubectl logs <pod-name>\n5. 实时查看日志：kubectl logs -f <pod-name>",
+      "selectors": [],
+      "url_pattern": ""
+    },
+    {
+      "question": "怎么部署一个应用？",
+      "answer": "1. 创建 Deployment：kubectl create deployment <name> --image=<image>\n2. 暴露服务：kubectl expose deployment <name> --port=80 --type=LoadBalancer\n3. 查看状态：kubectl get deployments\n4. 扩容：kubectl scale deployment <name> --replicas=3\n5. 更新镜像：kubectl set image deployment/<name> <container>=<new-image>",
+      "selectors": [],
+      "url_pattern": ""
+    },
+    {
+      "question": "怎么查看集群状态？",
+      "answer": "1. 查看节点：kubectl get nodes\n2. 查看集群信息：kubectl cluster-info\n3. 查看所有资源：kubectl get all --all-namespaces\n4. 查看事件：kubectl get events --sort-by=.metadata.creationTimestamp",
+      "selectors": [],
+      "url_pattern": ""
+    }
+  ]
+}

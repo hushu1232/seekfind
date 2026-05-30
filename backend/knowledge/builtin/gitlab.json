@@ -1,0 +1,24 @@
+{
+  "product": "GitLab",
+  "version": "2026",
+  "entries": [
+    {
+      "question": "怎么创建 Merge Request？",
+      "answer": "1. 推送分支到 GitLab：git push origin feature/my-change\n2. 在 GitLab 页面点击 Create merge request\n3. 选择源分支和目标分支\n4. 填写标题和描述\n5. 可选：指定 Reviewer\n6. 点击 Create merge request",
+      "selectors": ["[data-testid='create-mr-button']", ".merge-request-create"],
+      "url_pattern": "gitlab.com/*"
+    },
+    {
+      "question": "怎么配置 CI/CD？",
+      "answer": "1. 在项目根目录创建 .gitlab-ci.yml 文件\n2. 定义 stages（如 build, test, deploy）\n3. 为每个 stage 定义 job 和脚本\n4. 提交并推送\n5. 在 CI/CD → Pipelines 查看运行状态",
+      "selectors": ["#js-onboarding-ci"],
+      "url_pattern": "gitlab.com/*"
+    },
+    {
+      "question": "怎么 Fork 项目？",
+      "answer": "1. 打开目标项目页面\n2. 点击右上角 Fork 按钮\n3. 选择命名空间（个人或组）\n4. 等待 Fork 完成",
+      "selectors": ["[data-testid='fork-button']"],
+      "url_pattern": "gitlab.com/*"
+    }
+  ]
+}

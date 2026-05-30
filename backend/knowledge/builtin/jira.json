@@ -1,0 +1,24 @@
+{
+  "product": "Jira",
+  "version": "2026",
+  "entries": [
+    {
+      "question": "怎么创建 Issue？",
+      "answer": "1. 点击左侧菜单的 + 按钮或顶部 Create 按钮\n2. 选择项目\n3. 选择 Issue 类型（Story / Bug / Task）\n4. 填写标题、描述、优先级\n5. 可选：指派负责人、设置 Sprint\n6. 点击 Create",
+      "selectors": ["[data-testid='create-button']", "#create-issue"],
+      "url_pattern": "*.atlassian.net/*"
+    },
+    {
+      "question": "怎么看 Sprint 看板？",
+      "answer": "1. 点击左侧菜单的 Board（看板）\n2. 选择对应的 Board\n3. 看板显示 To Do / In Progress / Done 等列\n4. 拖拽卡片可以更改状态\n5. 右上角可切换 Sprint",
+      "selectors": ["[data-testid='board-view']"],
+      "url_pattern": "*.atlassian.net/*"
+    },
+    {
+      "question": "怎么筛选 Issue？",
+      "answer": "1. 在 Issue 列表页面，点击顶部 Filters\n2. 使用快速筛选器（My Issues / Recently Updated）\n3. 或使用 JQL 查询：project = XXX AND status = 'To Do'\n4. 保存常用筛选器为 Favorites",
+      "selectors": ["[data-testid='quick-filter']"],
+      "url_pattern": "*.atlassian.net/*"
+    }
+  ]
+}

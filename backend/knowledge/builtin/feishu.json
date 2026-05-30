@@ -1,0 +1,24 @@
+{
+  "product": "飞书",
+  "version": "2026",
+  "entries": [
+    {
+      "question": "怎么创建文档？",
+      "answer": "1. 打开飞书，点击左侧云文档\n2. 点击右上角 + 新建\n3. 选择文档类型（文档/表格/思维笔记/多维表格）\n4. 编写内容\n5. 点击右上角分享按钮设置权限",
+      "selectors": ["[data-testid='create-doc-btn']"],
+      "url_pattern": "*.feishu.cn/*"
+    },
+    {
+      "question": "怎么创建日程？",
+      "answer": "1. 打开飞书日历\n2. 点击要创建日程的时间段\n3. 填写标题、时间、参与人\n4. 可选：添加会议室、设置提醒\n5. 点击保存",
+      "selectors": ["[data-testid='create-event']"],
+      "url_pattern": "*.feishu.cn/calendar/*"
+    },
+    {
+      "question": "怎么发起视频会议？",
+      "answer": "1. 打开飞书，点击左侧视频会议图标\n2. 点击 新会议\n3. 选择会议类型（立即开会/预约会议）\n4. 邀请参与人\n5. 点击开始会议",
+      "selectors": ["[data-testid='start-meeting']"],
+      "url_pattern": "*.feishu.cn/*"
+    }
+  ]
+}

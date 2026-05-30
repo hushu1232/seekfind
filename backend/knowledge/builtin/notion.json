@@ -1,0 +1,24 @@
+{
+  "product": "Notion",
+  "version": "2026",
+  "entries": [
+    {
+      "question": "怎么创建新页面？",
+      "answer": "1. 点击左侧边栏的 + New page\n2. 选择模板或空白页面\n3. 输入页面标题\n4. 使用 / 命令插入各种块（文本/表格/代码/图片等）\n5. 页面自动保存",
+      "selectors": ["[data-testid='new-page-btn']"],
+      "url_pattern": "notion.so/*"
+    },
+    {
+      "question": "怎么使用数据库？",
+      "answer": "1. 在页面中输入 /database\n2. 选择数据库类型（Table/Board/Calendar/Timeline/List/Gallery）\n3. 添加列（属性），设置类型（文本/数字/日期/选择等）\n4. 添加行数据\n5. 可以切换不同视图",
+      "selectors": ["[data-testid='database-block']"],
+      "url_pattern": "notion.so/*"
+    },
+    {
+      "question": "怎么分享页面？",
+      "answer": "1. 点击右上角 Share 按钮\n2. 开启 Share to the web 发布为公开页面\n3. 或邀请特定成员：输入邮箱，设置权限（Can view/Can edit）\n4. 复制链接分享",
+      "selectors": ["[data-testid='share-button']"],
+      "url_pattern": "notion.so/*"
+    }
+  ]
+}
