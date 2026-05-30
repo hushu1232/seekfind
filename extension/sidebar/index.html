@@ -5,12 +5,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>求问</title>
   <style>
-    * {
-      margin: 0;
-      padding: 0;
-      box-sizing: border-box;
-    }
-
+    * { margin: 0; padding: 0; box-sizing: border-box; }
     :root {
       --primary: #4A90D9;
       --primary-light: #6BA5E7;
@@ -22,7 +17,6 @@
       --success: #28a745;
       --danger: #dc3545;
     }
-
     body {
       font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", system-ui, sans-serif;
       background: var(--bg);
@@ -33,7 +27,7 @@
       overflow: hidden;
     }
 
-    /* --- 顶部栏 --- */
+    /* 顶部栏 */
     .header {
       padding: 12px 16px;
       background: var(--bg-white);
@@ -42,22 +36,17 @@
       align-items: center;
       gap: 8px;
     }
-    .header h1 {
-      font-size: 16px;
-      font-weight: 600;
-    }
+    .header h1 { font-size: 16px; font-weight: 600; }
     .header .status {
       margin-left: auto;
-      width: 8px;
-      height: 8px;
+      width: 8px; height: 8px;
       border-radius: 50%;
       background: var(--danger);
+      transition: background 0.3s;
     }
-    .header .status.connected {
-      background: var(--success);
-    }
+    .header .status.connected { background: var(--success); }
 
-    /* --- 球体区域 --- */
+    /* 球体区域 */
     #ball-container {
       height: 200px;
       display: flex;
@@ -65,21 +54,9 @@
       justify-content: center;
       background: linear-gradient(135deg, #e8f0fe 0%, #f0f4ff 100%);
       border-bottom: 1px solid var(--border);
-      position: relative;
-    }
-    #ball-container .skeleton-ball {
-      width: 80px;
-      height: 80px;
-      border-radius: 50%;
-      background: linear-gradient(135deg, var(--primary) 0%, var(--primary-light) 100%);
-      animation: skeleton-pulse 2s ease-in-out infinite;
-    }
-    @keyframes skeleton-pulse {
-      0%, 100% { transform: scale(1); opacity: 0.8; }
-      50% { transform: scale(1.05); opacity: 1; }
     }
 
-    /* --- 消息区域 --- */
+    /* 消息区域 */
     .messages {
       flex: 1;
       overflow-y: auto;
@@ -88,7 +65,6 @@
       flex-direction: column;
       gap: 12px;
     }
-
     .message {
       max-width: 85%;
       padding: 10px 14px;
@@ -114,7 +90,7 @@
       font-style: italic;
     }
 
-    /* --- 步骤卡片 --- */
+    /* 步骤卡片 */
     .step-card {
       background: var(--bg-white);
       border: 1px solid var(--border);
@@ -128,14 +104,8 @@
       font-weight: 600;
       margin-bottom: 6px;
     }
-    .step-card .step-desc {
-      font-size: 14px;
-      margin-bottom: 10px;
-    }
-    .step-card .feedback-btns {
-      display: flex;
-      gap: 8px;
-    }
+    .step-card .step-desc { font-size: 14px; margin-bottom: 10px; }
+    .step-card .feedback-btns { display: flex; gap: 8px; }
     .step-card .feedback-btns button {
       flex: 1;
       padding: 6px;
@@ -146,19 +116,21 @@
       font-size: 13px;
       transition: all 0.15s;
     }
-    .step-card .feedback-btns button:hover {
-      background: var(--bg);
-    }
-    .step-card .feedback-btns .btn-correct {
-      color: var(--success);
-      border-color: var(--success);
-    }
-    .step-card .feedback-btns .btn-wrong {
-      color: var(--danger);
-      border-color: var(--danger);
+    .step-card .feedback-btns button:hover { background: var(--bg); }
+    .step-card .feedback-btns button:disabled { opacity: 0.5; cursor: not-allowed; }
+    .step-card .feedback-btns .btn-correct { color: var(--success); border-color: var(--success); }
+    .step-card .feedback-btns .btn-wrong { color: var(--danger); border-color: var(--danger); }
+
+    /* 截图卡片 */
+    .screenshot-card {
+      background: var(--bg-white);
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      padding: 12px;
+      margin-top: 8px;
     }
 
-    /* --- 输入区域 --- */
+    /* 输入区域 */
     .input-area {
       padding: 12px 16px;
       background: var(--bg-white);
@@ -175,9 +147,7 @@
       outline: none;
       transition: border-color 0.15s;
     }
-    .input-area input:focus {
-      border-color: var(--primary);
-    }
+    .input-area input:focus { border-color: var(--primary); }
     .input-area button {
       padding: 10px 16px;
       background: var(--primary);
@@ -189,36 +159,23 @@
       font-weight: 500;
       transition: background 0.15s;
     }
-    .input-area button:hover {
-      background: var(--primary-light);
-    }
-    .input-area button:disabled {
-      opacity: 0.5;
-      cursor: not-allowed;
-    }
+    .input-area button:hover { background: var(--primary-light); }
+    .input-area button:disabled { opacity: 0.5; cursor: not-allowed; }
   </style>
 </head>
 <body>
-  <!-- 顶部栏 -->
   <div class="header">
     <span>🔮</span>
     <h1>求问</h1>
     <div class="status" id="ws-status"></div>
   </div>
 
-  <!-- 球体区域 -->
-  <div id="ball-container">
-    <div class="skeleton-ball" id="skeleton-ball"></div>
-  </div>
+  <div id="ball-container"></div>
 
-  <!-- 消息区域 -->
   <div class="messages" id="messages">
-    <div class="message assistant">
-      👋 你好！我是求问，你的网页引导助手。有什么想问的？
-    </div>
+    <div class="message assistant">👋 你好！我是求问，你的网页引导助手。有什么想问的？</div>
   </div>
 
-  <!-- 输入区域 -->
   <div class="input-area">
     <input type="text" id="user-input" placeholder="输入你的问题..." autocomplete="off">
     <button id="send-btn">发送</button>
