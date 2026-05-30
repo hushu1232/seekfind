@@ -6,28 +6,9 @@
  *   - 三种导入方式：输入 URL / 拖拽本地文件 / 粘贴文本
  *   - 触发后端索引构建
  *   - 进度条显示
- *
- * 布局：
- *   ┌─────────────────────────┐
- *   │  📥 导入文档             │
- *   │                         │
- *   │  方式一：输入 URL        │
- *   │  [https://docs.xxx  ]   │
- *   │  [开始爬取]             │
- *   │                         │
- *   │  方式二：拖拽文件        │
- *   │  ┌───────────────────┐  │
- *   │  │  拖拽 .md/.html   │  │
- *   │  │  文件到这里       │  │
- *   │  └───────────────────┘  │
- *   │                         │
- *   │  方式三：粘贴文本        │
- *   │  [                    ] │
- *   │  [导入]                 │
- *   │                         │
- *   │  ████████░░ 80%         │
- *   └─────────────────────────┘
  */
+
+import { API_BASE } from "../common/constants";
 
 /**
  * 渲染文档导入向导。
@@ -143,7 +124,7 @@ async function importFromUrl(url: string, container: HTMLElement): Promise<void>
   showProgress(container, "正在爬取文档...", 10);
 
   try {
-    const resp = await fetch("http://localhost:8700/api/index/url", {
+    const resp = await fetch("${API_BASE}/api/index/url", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ url }),
@@ -170,7 +151,7 @@ async function importFromFiles(files: FileList, container: HTMLElement): Promise
     showProgress(container, `正在导入 ${file.name}...`, 50);
 
     try {
-      const resp = await fetch("http://localhost:8700/api/index/text", {
+      const resp = await fetch("${API_BASE}/api/index/text", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ text, title: file.name }),
@@ -194,7 +175,7 @@ async function importFromText(text: string, container: HTMLElement): Promise<voi
   showProgress(container, "正在导入...", 50);
 
   try {
-    const resp = await fetch("http://localhost:8700/api/index/text", {
+    const resp = await fetch("${API_BASE}/api/index/text", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ text, title: "用户粘贴文本" }),

@@ -196,12 +196,18 @@ class PongMessage(BaseModel):
     type: str = "pong"
 
 
+class ErrorMessage(BaseModel):
+    """错误消息。"""
+    type: str = "error"
+    message: str
+
+
 # 服务端消息联合类型
 ServerMessage = (
     SessionCreated | AgentThinking | IntentClassified | AgentToken |
     AgentResponse | HighlightCommand | ToolCallEvent | ToolResultEvent |
     ScreenshotAnnotated | ProactiveHint | WakewordDetected | CommandDetected |
-    PongMessage
+    PongMessage | ErrorMessage
 )
 
 

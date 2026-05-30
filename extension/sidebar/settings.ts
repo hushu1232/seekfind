@@ -27,7 +27,7 @@
  *   └─────────────────────────┘
  */
 
-import { STORAGE_KEYS, DEFAULT_SETTINGS, DEFAULT_PRIVACY } from "../common/constants";
+import { STORAGE_KEYS, DEFAULT_SETTINGS, DEFAULT_PRIVACY, API_BASE } from "../common/constants";
 
 type ModelStrategy = "local" | "cloud" | "hybrid";
 
@@ -164,7 +164,7 @@ export async function renderSettingsPanel(container: HTMLElement): Promise<void>
       await saveSettings(settings);
 
       // 通知后端热切换
-      fetch("http://localhost:8700/api/config/model", {
+      fetch(`${API_BASE}/api/config/model`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ model_strategy: strategy }),

@@ -14,7 +14,7 @@ import json
 import pytest
 from unittest.mock import AsyncMock, MagicMock, patch
 
-from agent import QiuWenAgent, AgentState, _build_rag_graph, _build_guide_graph
+from agent import QiuWenAgent, AgentState, _build_graph_real
 from langchain_core.messages import AIMessage, HumanMessage
 
 
@@ -124,15 +124,18 @@ class TestLangGraphStructure:
 
     def test_rag_graph_has_required_nodes(self):
         """RAG 子图应包含 agent 和 tools 节点。"""
+        from langgraph.prebuilt import ToolNode
         llm = MagicMock()
         llm.bind_tools = MagicMock(return_value=llm)
-        graph = _build_rag_graph(llm)
-        # 编译后的 graph 应该可以调用
+        tool_node = ToolNode([])
+        graph = _build_graph_real(llm, tool_node)
         assert graph is not None
 
     def test_guide_graph_has_required_nodes(self):
         """引导子图应包含 agent 和 tools 节点。"""
+        from langgraph.prebuilt import ToolNode
         llm = MagicMock()
         llm.bind_tools = MagicMock(return_value=llm)
-        graph = _build_guide_graph(llm)
+        tool_node = ToolNode([])
+        graph = _build_graph_real(llm, tool_node)
         assert graph is not None

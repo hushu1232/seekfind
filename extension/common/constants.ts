@@ -8,6 +8,7 @@
 // ---------------------------------------------------------------------------
 
 export const WS_URL = "ws://localhost:8700/ws/chat";
+export const API_BASE = "http://localhost:8700";
 export const WS_RECONNECT_INTERVAL = 3000; // ms
 export const WS_HEARTBEAT_INTERVAL = 30000; // ms
 

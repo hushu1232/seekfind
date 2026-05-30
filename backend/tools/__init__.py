@@ -8,12 +8,16 @@
   Phase 3: classify_page, learn_flow
 
 关键设计：
-  每个工具同时提供：
-    1. xxx_tool 实例 — 自定义 dataclass，有 execute() 方法
-    2. xxx_langchain — LangChain StructuredTool，供 ToolNode 使用
+  - get_all_tools(): 返回原始工具实例
+  - get_langchain_tools(deps): 返回 LangChain StructuredTool，通过 partial 注入依赖
+  - 依赖注入：long_term_memory 在 agent.initialize() 后传入
 """
 
+import functools
+from typing import Any
+
 from langchain_core.tools import StructuredTool
+import pydantic
 
 from tools.search_docs import search_docs_tool
 from tools.fetch_doc_page import fetch_doc_page_tool
@@ -28,7 +32,7 @@ __all__ = ["get_all_tools", "get_tool_schemas", "get_langchain_tools"]
 
 
 # ---------------------------------------------------------------------------
-# 原始工具实例（用于直接调用）
+# 原始工具实例
 # ---------------------------------------------------------------------------
 _ALL_TOOLS = [
     search_docs_tool,
@@ -44,26 +48,22 @@ _ALL_TOOLS = [
 
 
 # ---------------------------------------------------------------------------
-# LangChain StructuredTool 包装
+# LangChain StructuredTool 包装（支持依赖注入）
 # ---------------------------------------------------------------------------
-def _make_langchain_tool(tool_instance) -> StructuredTool:
+def _make_langchain_tool(tool_instance, **deps) -> StructuredTool:
     """
     将自定义工具包装为 LangChain StructuredTool。
 
-    从 tool.schema 中提取参数定义，映射到 LangChain 的 args_schema。
+    通过 functools.partial 将依赖（如 long_term_memory）注入到 execute 方法。
+    ToolNode 调用时只传 LLM 提供的 kwargs，依赖已预绑定。
     """
-    import pydantic
-    from typing import Any
-
-    # 从 schema 构建 Pydantic model
     properties = tool_instance.schema.get("parameters", {}).get("properties", {})
     required_fields = set(tool_instance.schema.get("parameters", {}).get("required", []))
 
-    # 动态创建 Pydantic model
     field_defs = {}
     for param_name, param_def in properties.items():
         param_type = param_def.get("type", "string")
-        py_type = str  # 默认 string
+        py_type = str
         if param_type == "integer":
             py_type = int
         elif param_type == "boolean":
@@ -79,12 +79,13 @@ def _make_langchain_tool(tool_instance) -> StructuredTool:
         else:
             field_defs[param_name] = (py_type, pydantic.Field(default=default, description=description))
 
-    # 创建 Pydantic model
     args_model = pydantic.create_model(f"{tool_instance.name}Args", **field_defs)
 
-    # 创建 execute 函数（LangChain 调用时传入 kwargs）
+    # 用 partial 注入依赖，LLM 只需提供 kwargs
+    execute_with_deps = functools.partial(tool_instance.execute, **deps)
+
     async def execute_fn(**kwargs) -> str:
-        return await tool_instance.execute(**kwargs)
+        return await execute_with_deps(**kwargs)
 
     execute_fn.__name__ = tool_instance.name
     execute_fn.__doc__ = tool_instance.description
@@ -97,15 +98,33 @@ def _make_langchain_tool(tool_instance) -> StructuredTool:
     )
 
 
-# 缓存 LangChain 工具列表
+# 缓存
 _langchain_tools: list[StructuredTool] | None = None
 
 
-def get_langchain_tools() -> list[StructuredTool]:
-    """返回 LangChain StructuredTool 列表（供 ToolNode 使用）。"""
+def get_langchain_tools(long_term_memory=None, vision_model=None, llm=None) -> list[StructuredTool]:
+    """
+    返回 LangChain StructuredTool 列表（支持依赖注入）。
+
+    Args:
+        long_term_memory: Chroma 向量库实例（注入到 search_docs/save_memory/recall_memory）
+        vision_model: moondream 视觉模型（注入到 visual_locate）
+        llm: LLM 实例（注入到 classify_page）
+
+    使用 functools.partial 将依赖预绑定到工具的 execute 方法，
+    ToolNode 调用时只需传入 LLM 提供的参数。
+    """
     global _langchain_tools
-    if _langchain_tools is None:
-        _langchain_tools = [_make_langchain_tool(t) for t in _ALL_TOOLS]
+    # 依赖变化时重建
+    deps = {}
+    if long_term_memory:
+        deps["long_term_memory"] = long_term_memory
+    if vision_model:
+        deps["vision_model"] = vision_model
+    if llm:
+        deps["llm"] = llm
+
+    _langchain_tools = [_make_langchain_tool(t, **deps) for t in _ALL_TOOLS]
     return _langchain_tools
 
 
