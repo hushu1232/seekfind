@@ -1,0 +1,24 @@
+{
+  "product": "淘宝",
+  "version": "2026",
+  "entries": [
+    {
+      "question": "怎么搜索商品？",
+      "answer": "1. 打开淘宝首页\n2. 在搜索框输入商品关键词\n3. 点击搜索\n4. 使用筛选器（价格/销量/信用）\n5. 点击商品进入详情页",
+      "selectors": ["#q"],
+      "url_pattern": "taobao.com/*"
+    },
+    {
+      "question": "怎么下单购买？",
+      "answer": "1. 在商品详情页选择规格（颜色/尺码）\n2. 点击立即购买\n3. 确认收货地址\n4. 选择支付方式\n5. 点击提交订单\n6. 完成支付",
+      "selectors": ["#J_LinkBuy"],
+      "url_pattern": "item.taobao.com/*"
+    },
+    {
+      "question": "怎么查看物流？",
+      "answer": "1. 打开我的淘宝\n2. 点击已买到的宝贝\n3. 找到订单，点击查看物流\n4. 可以看到快递公司和物流轨迹\n5. 也可以复制单号到快递100查询",
+      "selectors": ["[data-testid='logistics-link']"],
+      "url_pattern": "taobao.com/*"
+    }
+  ]
+}

@@ -1,0 +1,18 @@
+{
+  "product": "Microsoft Teams",
+  "version": "2026",
+  "entries": [
+    {
+      "question": "怎么创建团队？",
+      "answer": "1. 点击左侧 Teams 图标\n2. 点击 Join or create a team\n3. 点击 Create team\n4. 输入团队名称和描述\n5. 选择隐私级别\n6. 添加成员",
+      "selectors": ["[aria-label='Create a team']"],
+      "url_pattern": "teams.microsoft.com/*"
+    },
+    {
+      "question": "怎么发起视频会议？",
+      "answer": "1. 点击左侧 Calendar\n2. 点击 New meeting\n3. 填写标题、时间、参与人\n4. 点击 Save\n5. 或直接点击 Meet now 立即开会",
+      "selectors": ["[aria-label='New meeting']"],
+      "url_pattern": "teams.microsoft.com/*"
+    }
+  ]
+}

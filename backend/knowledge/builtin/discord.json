@@ -1,0 +1,24 @@
+{
+  "product": "Discord",
+  "version": "2026",
+  "entries": [
+    {
+      "question": "怎么创建服务器？",
+      "answer": "1. 点击左侧边栏底部的 + 号\n2. 选择创建服务器\n3. 选择模板（游戏/学校/社区/自定义）\n4. 输入服务器名称\n5. 上传图标（可选）\n6. 点击创建",
+      "selectors": ["[aria-label='Add a Server']"],
+      "url_pattern": "discord.com/*"
+    },
+    {
+      "question": "怎么创建频道？",
+      "answer": "1. 右键点击服务器名称\n2. 选择 Create Channel\n3. 选择类型（文字/语音/公告）\n4. 输入频道名称\n5. 设置权限（可选）\n6. 点击 Create Channel",
+      "selectors": ["[data-list-item-id='channels-create']"],
+      "url_pattern": "discord.com/*"
+    },
+    {
+      "question": "怎么加入语音频道？",
+      "answer": "1. 在左侧找到语音频道\n2. 点击频道名称即可加入\n3. 加入后可以开关麦克风和耳机\n4. 点击左下角断开图标离开",
+      "selectors": ["[class*='voiceChannel']"],
+      "url_pattern": "discord.com/*"
+    }
+  ]
+}

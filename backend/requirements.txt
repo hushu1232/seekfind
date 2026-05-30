@@ -45,3 +45,7 @@ edge-tts==6.*
 
 # --- 语音识别 (Phase 4, 可选) ---
 # vosk==0.3.*
+
+# --- 测试 ---
+pytest==8.*
+pytest-asyncio==0.24.*

@@ -1,0 +1,18 @@
+{
+  "product": "Obsidian",
+  "version": "2026",
+  "entries": [
+    {
+      "question": "怎么创建笔记？",
+      "answer": "1. 点击左侧文件面板的 + 新建笔记按钮\n2. 输入笔记标题（即文件名）\n3. 使用 Markdown 语法编写\n4. 支持 [[双向链接]] 链接其他笔记\n5. 自动保存到 Vault 文件夹",
+      "selectors": ["[aria-label='New note']"],
+      "url_pattern": ""
+    },
+    {
+      "question": "怎么安装插件？",
+      "answer": "1. 打开 Settings → Community plugins\n2. 关闭 Safe mode（首次需要）\n3. 点击 Browse\n4. 搜索插件名称\n5. 点击 Install → Enable\n6. 在插件设置中配置",
+      "selectors": ["[aria-label='Community plugins']"],
+      "url_pattern": ""
+    }
+  ]
+}

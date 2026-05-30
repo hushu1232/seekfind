@@ -1,0 +1,18 @@
+{
+  "product": "Miro",
+  "version": "2026",
+  "entries": [
+    {
+      "question": "怎么创建白板？",
+      "answer": "1. 登录 Miro，点击 Create board\n2. 选择空白或模板\n3. 使用左侧工具栏：便签、形状、文本、连线\n4. 双击画布添加便签\n5. 拖拽移动元素\n6. 分享：点击右上角 Share",
+      "selectors": ["[data-testid='create-board']"],
+      "url_pattern": "miro.com/*"
+    },
+    {
+      "question": "怎么使用便签？",
+      "answer": "1. 点击左侧工具栏的便签图标\n2. 点击画布放置便签\n3. 输入文字\n4. 右键可更改颜色\n5. 拖拽调整大小和位置",
+      "selectors": ["[data-testid='sticky-note-tool']"],
+      "url_pattern": "miro.com/*"
+    }
+  ]
+}

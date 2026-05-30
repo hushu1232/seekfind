@@ -1,0 +1,18 @@
+{
+  "product": "Google Sheets",
+  "version": "2026",
+  "entries": [
+    {
+      "question": "怎么创建表格？",
+      "answer": "1. 打开 sheets.google.com\n2. 点击空白 或 选择模板\n3. 在单元格中输入数据\n4. 使用公式：=SUM(A1:A10)\n5. 自动保存到 Google Drive",
+      "selectors": ["[data-action='create']"],
+      "url_pattern": "sheets.google.com/*"
+    },
+    {
+      "question": "怎么创建图表？",
+      "answer": "1. 选中数据范围\n2. 点击 Insert → Chart\n3. 在右侧 Chart editor 选择图表类型\n4. 配置数据范围和样式\n5. 点击 Insert 嵌入表格",
+      "selectors": ["#insert-menu"],
+      "url_pattern": "sheets.google.com/*"
+    }
+  ]
+}

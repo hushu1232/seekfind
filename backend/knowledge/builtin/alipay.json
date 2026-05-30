@@ -1,0 +1,18 @@
+{
+  "product": "支付宝",
+  "version": "2026",
+  "entries": [
+    {
+      "question": "怎么转账？",
+      "answer": "1. 打开支付宝首页\n2. 点击转账\n3. 输入对方支付宝账号或手机号\n4. 输入转账金额\n5. 确认信息无误\n6. 输入支付密码完成转账",
+      "selectors": ["[data-testid='transfer-btn']"],
+      "url_pattern": "alipay.com/*"
+    },
+    {
+      "question": "怎么扫码付款？",
+      "answer": "1. 打开支付宝首页\n2. 点击扫一扫\n3. 对准商家二维码\n4. 输入金额（商家码自动填充）\n5. 确认付款\n6. 输入支付密码或指纹",
+      "selectors": ["[data-testid='scan-btn']"],
+      "url_pattern": "alipay.com/*"
+    }
+  ]
+}

@@ -1,0 +1,18 @@
+{
+  "product": "Postman",
+  "version": "2026",
+  "entries": [
+    {
+      "question": "怎么发送请求？",
+      "answer": "1. 点击 + 新建请求\n2. 选择方法（GET/POST/PUT/DELETE）\n3. 输入 URL\n4. 添加 Headers、Body、Params\n5. 点击 Send\n6. 查看 Response（状态码、Body、Headers）",
+      "selectors": ["[data-testid='request-url-input']"],
+      "url_pattern": "postman.com/*"
+    },
+    {
+      "question": "怎么创建集合？",
+      "answer": "1. 左侧面板点击 + 新建集合\n2. 输入集合名称\n3. 拖拽请求到集合中\n4. 可以添加集合级变量和 Pre-request Script\n5. 右键集合可以导出/分享",
+      "selectors": ["[data-testid='create-collection']"],
+      "url_pattern": "postman.com/*"
+    }
+  ]
+}

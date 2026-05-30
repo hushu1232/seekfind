@@ -1,0 +1,24 @@
+{
+  "product": "Slack",
+  "version": "2026",
+  "entries": [
+    {
+      "question": "怎么创建频道？",
+      "answer": "1. 点击左侧边栏 Channels 旁边的 + 号\n2. 选择 Create a channel\n3. 输入频道名称（小写，无空格）\n4. 添加描述\n5. 选择公开或私有\n6. 添加成员\n7. 点击 Create",
+      "selectors": ["[data-testid='create-channel-button']"],
+      "url_pattern": "app.slack.com/*"
+    },
+    {
+      "question": "怎么发送消息？",
+      "answer": "1. 在左侧选择频道或 DM\n2. 在底部输入框输入消息\n3. 按 Enter 发送\n4. Shift+Enter 换行\n5. 可以 @提人、添加表情、附加文件",
+      "selectors": ["[data-testid='message-input']"],
+      "url_pattern": "app.slack.com/*"
+    },
+    {
+      "question": "怎么搜索消息？",
+      "answer": "1. 点击顶部搜索栏（或 Ctrl+K）\n2. 输入关键词\n3. 使用过滤器：in:channel from:@user has:link\n4. 按 Enter 搜索",
+      "selectors": ["[data-testid='search-input']"],
+      "url_pattern": "app.slack.com/*"
+    }
+  ]
+}

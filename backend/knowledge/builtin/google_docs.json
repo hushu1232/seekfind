@@ -1,0 +1,18 @@
+{
+  "product": "Google Docs",
+  "version": "2026",
+  "entries": [
+    {
+      "question": "怎么创建文档？",
+      "answer": "1. 打开 docs.google.com\n2. 点击空白 或 选择模板\n3. 自动保存到 Google Drive\n4. 分享：点击右上角 Share\n5. 输入邮箱，设置权限（Viewer/Editor）",
+      "selectors": ["[data-action='create']"],
+      "url_pattern": "docs.google.com/*"
+    },
+    {
+      "question": "怎么插入目录？",
+      "answer": "1. 使用标题样式（Heading 1/2/3）格式化章节\n2. 光标放在要插入目录的位置\n3. 点击 Insert → Table of contents\n4. 选择样式\n5. 目录自动根据标题生成，可点击跳转",
+      "selectors": ["#insert-menu"],
+      "url_pattern": "docs.google.com/*"
+    }
+  ]
+}

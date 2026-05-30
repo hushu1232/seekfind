@@ -1,0 +1,24 @@
+{
+  "product": "AWS",
+  "version": "2026",
+  "entries": [
+    {
+      "question": "怎么创建 EC2 实例？",
+      "answer": "1. 登录 AWS Console，搜索 EC2\n2. 点击 Launch Instance\n3. 选择 AMI（如 Amazon Linux 2023）\n4. 选择实例类型（如 t3.micro 免费套餐）\n5. 配置密钥对（创建新的或选择已有）\n6. 配置安全组（开放 22/80/443 端口）\n7. 点击 Launch",
+      "selectors": ["[id='create-instance-button']"],
+      "url_pattern": "console.aws.amazon.com/*"
+    },
+    {
+      "question": "怎么创建 S3 存储桶？",
+      "answer": "1. 搜索 S3，进入 S3 控制台\n2. 点击 Create bucket\n3. 输入存储桶名称（全球唯一）\n4. 选择区域\n5. 配置权限（默认私有）\n6. 点击 Create bucket\n7. 上传文件：进入存储桶 → Upload",
+      "selectors": ["[id='create-bucket-button']"],
+      "url_pattern": "console.aws.amazon.com/s3/*"
+    },
+    {
+      "question": "怎么配置 IAM 用户？",
+      "answer": "1. 搜索 IAM，进入 IAM 控制台\n2. 左侧点击 Users → Create user\n3. 输入用户名\n4. 选择访问类型（控制台/编程/两者）\n5. 设置权限（附加策略或加入组）\n6. 创建并下载访问密钥",
+      "selectors": ["[id='create-user-button']"],
+      "url_pattern": "console.aws.amazon.com/iam/*"
+    }
+  ]
+}

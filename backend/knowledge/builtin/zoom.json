@@ -1,0 +1,18 @@
+{
+  "product": "Zoom",
+  "version": "2026",
+  "entries": [
+    {
+      "question": "怎么发起会议？",
+      "answer": "1. 打开 Zoom 应用\n2. 点击 New Meeting\n3. 选择是否使用视频\n4. 邀请参与者：点击 Participants → Invite\n5. 复制邀请链接发给参会人",
+      "selectors": ["[aria-label='New Meeting']"],
+      "url_pattern": "zoom.us/*"
+    },
+    {
+      "question": "怎么共享屏幕？",
+      "answer": "1. 在会议中点击底部 Share Screen\n2. 选择共享内容（整个屏幕/窗口/白板）\n3. 点击 Share\n4. 共享时可开启远程控制\n5. 点击 Stop Share 结束共享",
+      "selectors": ["[aria-label='Share Screen']"],
+      "url_pattern": "zoom.us/*"
+    }
+  ]
+}

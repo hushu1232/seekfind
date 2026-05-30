@@ -1,0 +1,18 @@
+{
+  "product": "Linear",
+  "version": "2026",
+  "entries": [
+    {
+      "question": "怎么创建 Issue？",
+      "answer": "1. 按 C 键快速创建 Issue\n2. 输入标题\n3. 选择项目、优先级、标签\n4. 指派负责人\n5. 按 Enter 保存",
+      "selectors": ["[data-testid='create-issue-button']"],
+      "url_pattern": "linear.app/*"
+    },
+    {
+      "question": "怎么看 Cycle？",
+      "answer": "1. 点击左侧 Cycles\n2. 查看当前 Cycle 的进度\n3. 燃尽图显示完成趋势\n4. 可以将 Issue 拖入/拖出 Cycle",
+      "selectors": ["[data-testid='cycles-link']"],
+      "url_pattern": "linear.app/*"
+    }
+  ]
+}

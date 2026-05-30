@@ -1,0 +1,18 @@
+{
+  "product": "Canva",
+  "version": "2026",
+  "entries": [
+    {
+      "question": "怎么创建设计？",
+      "answer": "1. 登录 Canva，点击 Create a design\n2. 选择尺寸（如 Instagram Post / A4 / 自定义）\n3. 使用模板或从空白开始\n4. 左侧面板添加元素、文字、图片\n5. 右侧面板调整样式\n6. 点击 Download 导出",
+      "selectors": ["[data-testid='create-design-button']"],
+      "url_pattern": "canva.com/*"
+    },
+    {
+      "question": "怎么使用模板？",
+      "answer": "1. 创建设计后，左侧面板显示模板\n2. 搜索关键词找到合适模板\n3. 点击模板应用到画布\n4. 修改文字、图片、颜色\n5. 自动保存",
+      "selectors": ["[data-testid='templates-tab']"],
+      "url_pattern": "canva.com/*"
+    }
+  ]
+}

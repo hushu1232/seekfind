@@ -1,0 +1,18 @@
+{
+  "product": "Outlook",
+  "version": "2026",
+  "entries": [
+    {
+      "question": "怎么发送邮件？",
+      "answer": "1. 点击左上角 New mail 按钮\n2. 输入收件人\n3. 输入主题和正文\n4. 可选：添加附件、设置重要性\n5. 点击 Send",
+      "selectors": ["[aria-label='New mail']"],
+      "url_pattern": "outlook.live.com/*"
+    },
+    {
+      "question": "怎么创建日程？",
+      "answer": "1. 点击左侧日历图标\n2. 点击 New event\n3. 输入标题、时间、地点\n4. 添加参与人\n5. 设置提醒\n6. 点击 Save",
+      "selectors": ["[aria-label='New event']"],
+      "url_pattern": "outlook.live.com/*"
+    }
+  ]
+}

@@ -1,0 +1,18 @@
+{
+  "product": "Vercel",
+  "version": "2026",
+  "entries": [
+    {
+      "question": "怎么部署项目？",
+      "answer": "1. 登录 Vercel，点击 New Project\n2. 选择 Git 仓库（GitHub/GitLab/Bitbucket）\n3. 导入仓库\n4. 配置框架预设（自动检测）\n5. 点击 Deploy\n6. 等待部署完成，获得公网 URL",
+      "selectors": ["[data-testid='new-project-button']"],
+      "url_pattern": "vercel.com/*"
+    },
+    {
+      "question": "怎么配置自定义域名？",
+      "answer": "1. 进入项目 Settings → Domains\n2. 输入自定义域名\n3. 点击 Add\n4. 按提示配置 DNS 记录（CNAME 或 A 记录）\n5. 等待 SSL 证书自动签发",
+      "selectors": ["[data-testid='add-domain-button']"],
+      "url_pattern": "vercel.com/*"
+    }
+  ]
+}

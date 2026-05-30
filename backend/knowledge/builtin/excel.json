@@ -1,0 +1,24 @@
+{
+  "product": "Excel",
+  "version": "2026",
+  "entries": [
+    {
+      "question": "怎么使用公式？",
+      "answer": "1. 点击要输入公式的单元格\n2. 输入 = 开始公式\n3. 常用公式：\n   - =SUM(A1:A10) 求和\n   - =AVERAGE(A1:A10) 平均值\n   - =VLOOKUP(查找值, 范围, 列号, FALSE) 查找\n   - =IF(条件, 真值, 假值) 条件判断\n4. 按 Enter 确认",
+      "selectors": ["#formula-bar"],
+      "url_pattern": ""
+    },
+    {
+      "question": "怎么创建数据透视表？",
+      "answer": "1. 选中数据范围\n2. 点击 Insert → PivotTable\n3. 选择放置位置\n4. 在右侧字段面板拖拽字段到行/列/值/筛选\n5. 数据透视表自动生成",
+      "selectors": ["#insert-pivot-table"],
+      "url_pattern": ""
+    },
+    {
+      "question": "怎么制作图表？",
+      "answer": "1. 选中数据范围\n2. 点击 Insert → 推荐的图表\n3. 选择图表类型（柱状图/折线图/饼图等）\n4. 点击确定\n5. 右键图表可修改样式和数据",
+      "selectors": ["#insert-chart"],
+      "url_pattern": ""
+    }
+  ]
+}

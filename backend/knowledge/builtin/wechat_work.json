@@ -1,0 +1,24 @@
+{
+  "product": "企业微信",
+  "version": "2026",
+  "entries": [
+    {
+      "question": "怎么创建群聊？",
+      "answer": "1. 点击右上角 +\n2. 选择 发起群聊\n3. 选择群成员\n4. 设置群名称\n5. 点击确定",
+      "selectors": ["[data-testid='create-group']"],
+      "url_pattern": "work.weixin.qq.com/*"
+    },
+    {
+      "question": "怎么提交审批？",
+      "answer": "1. 点击底部工作台\n2. 找到审批应用\n3. 选择审批类型（请假/报销/出差）\n4. 填写表单\n5. 选择审批人\n6. 点击提交",
+      "selectors": ["[data-testid='approval-submit']"],
+      "url_pattern": "work.weixin.qq.com/*"
+    },
+    {
+      "question": "怎么发红包？",
+      "answer": "1. 在聊天窗口点击 +\n2. 选择红包\n3. 输入金额和个数\n4. 选择红包类型（普通/拼手气）\n5. 填写祝福语\n6. 点击塞钱进红包",
+      "selectors": ["[data-testid='red-packet']"],
+      "url_pattern": "work.weixin.qq.com/*"
+    }
+  ]
+}
