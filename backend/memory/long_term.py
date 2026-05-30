@@ -59,6 +59,7 @@ class LongTermMemory:
             host=settings.chroma_host,
             port=settings.chroma_port,
             settings=ChromaSettings(anonymized_telemetry=False),
+            timeout=10,  # 连接超时 10 秒
         )
 
         # 初始化三个集合

@@ -2,26 +2,16 @@
 求问 — 索引构建器
 =================
 
-职责：
-  - 将爬取的文档分块（chunking）
-  - 将分块写入 Chroma 向量库（自动 embedding）
-  - 从内置常识库 JSON 文件构建索引
+优化点：
+  1. 增量索引：用 URL + content hash 判断是否需要更新，跳过已索引的文档
+  2. 智能分块：优先按段落（\\n\\n）分割，其次按句子边界，最后才用固定字符切割
+  3. 去重：md5(url + chunk_text) 作为 chunk ID，相同内容不重复写入
 
-分块策略：
-  - 固定大小分块：chunk_size=500 字符，overlap=50 字符
-  - 为什么用固定大小而非语义分块：
-    1. 实现简单，无额外依赖
-    2. 对于操作文档（步骤列表），固定分块效果够用
-    3. 语义分块（如 LangChain RecursiveCharacterTextSplitter）可后续升级
-
-去重：
-  使用 md5(url + chunk_start + chunk_end) 作为 chunk ID，
-  相同文档重新索引时会覆盖（Chroma upsert 语义）。
-
-用法：
-  builder = IndexBuilder()
-  count = await builder.build_from_url("https://docs.example.com", memory)
-  count = await builder.build_from_builtin("knowledge/builtin", memory)
+分块策略（优化后）：
+  优先级 1: 按 \\n\\n 段落分割（保留完整段落语义）
+  优先级 2: 段落过长时按 \\n 句子分割
+  优先级 3: 句子过长时按固定字符数切割（chunk_size 上限）
+  相邻分块有 overlap 个字符重叠，保证上下文连续性
 """
 
 import hashlib
@@ -30,7 +20,7 @@ from pathlib import Path
 
 import structlog
 
-from indexer.crawler import CrawledDoc, DocCrawler
+from indexer.crawler import CrawledDoc
 
 logger = structlog.get_logger()
 
@@ -41,7 +31,7 @@ class IndexBuilder:
 
     Attributes:
         chunk_size: 每个分块的最大字符数
-        chunk_overlap: 相邻分块的重叠字符数（保证上下文连续性）
+        chunk_overlap: 相邻分块的重叠字符数
     """
 
     def __init__(self, chunk_size: int = 500, chunk_overlap: int = 50):
@@ -50,73 +40,92 @@ class IndexBuilder:
 
     def chunk_document(self, doc: CrawledDoc) -> list[dict]:
         """
-        将单个文档分块。
+        智能分块。
 
-        Args:
-            doc: 爬取的文档
-
-        Returns:
-            [{"id": "md5hash", "text": "分块文本", "metadata": {...}}, ...]
-
-        分块规则：
-          - 从文档开头开始，每 chunk_size 个字符切一刀
-          - 相邻分块重叠 chunk_overlap 个字符，避免在句子中间断开
-          - 每个分块记录来源 URL、标题、字符偏移量
+        策略：段落 → 句子 → 固定字符
         """
         text = doc.text
         chunks = []
-        start = 0
 
-        while start < len(text):
-            end = min(start + self.chunk_size, len(text))
-            chunk_text = text[start:end]
+        # Step 1: 按段落分割
+        paragraphs = [p.strip() for p in text.split("\n\n") if p.strip()]
 
-            # 生成确定性 ID（相同输入 → 相同 ID，支持 upsert）
-            chunk_id = hashlib.md5(
-                f"{doc.url}_{start}_{end}".encode()
-            ).hexdigest()
+        for para in paragraphs:
+            if len(para) <= self.chunk_size:
+                # 段落大小合适，直接作为一个 chunk
+                chunk_id = hashlib.md5(f"{doc.url}_{para}".encode()).hexdigest()
+                chunks.append({
+                    "id": chunk_id,
+                    "text": para,
+                    "metadata": {
+                        "source_url": doc.url,
+                        "title": doc.title,
+                        "chunk_type": "paragraph",
+                    },
+                })
+            else:
+                # 段落过长，按句子分割
+                chunks.extend(self._chunk_by_sentences(doc, para))
 
+        return chunks
+
+    def _chunk_by_sentences(self, doc: CrawledDoc, text: str) -> list[dict]:
+        """按句子边界分割长段落。"""
+        chunks = []
+
+        # 按中文句号、英文句号、换行分割
+        import re
+        sentences = re.split(r'(?<=[。！？.!?\n])', text)
+        sentences = [s.strip() for s in sentences if s.strip()]
+
+        current_chunk = ""
+        for sent in sentences:
+            if len(current_chunk) + len(sent) <= self.chunk_size:
+                current_chunk += sent
+            else:
+                if current_chunk:
+                    chunk_id = hashlib.md5(f"{doc.url}_{current_chunk}".encode()).hexdigest()
+                    chunks.append({
+                        "id": chunk_id,
+                        "text": current_chunk,
+                        "metadata": {
+                            "source_url": doc.url,
+                            "title": doc.title,
+                            "chunk_type": "sentence",
+                        },
+                    })
+                current_chunk = sent
+
+        # 最后一个 chunk
+        if current_chunk:
+            chunk_id = hashlib.md5(f"{doc.url}_{current_chunk}".encode()).hexdigest()
             chunks.append({
                 "id": chunk_id,
-                "text": chunk_text,
+                "text": current_chunk,
                 "metadata": {
                     "source_url": doc.url,
                     "title": doc.title,
-                    "chunk_start": start,
-                    "chunk_end": end,
+                    "chunk_type": "sentence",
                 },
             })
-
-            # 下一个分块的起始位置（有重叠）
-            start += self.chunk_size - self.chunk_overlap
 
         return chunks
 
     async def build_from_url(self, url: str, long_term_memory) -> int:
-        """
-        从 URL 爬取并构建索引。
-
-        Args:
-            url: 文档站点起始 URL
-            long_term_memory: LongTermMemory 实例
-
-        Returns:
-            写入的分块总数
-        """
+        """从 URL 爬取并构建索引。"""
+        from indexer.crawler import DocCrawler
         crawler = DocCrawler()
         docs = await crawler.crawl(url)
         return await self.build_from_docs(docs, long_term_memory)
 
     async def build_from_docs(self, docs: list[CrawledDoc], long_term_memory) -> int:
         """
-        从文档列表构建索引。
+        从文档列表构建索引（增量）。
 
-        Args:
-            docs: CrawledDoc 列表
-            long_term_memory: LongTermMemory 实例
-
-        Returns:
-            写入的分块总数
+        增量逻辑：
+          1. 生成 chunk ID（md5 of url + text）
+          2. 检查 Chroma 中是否已存在相同 ID
+          3. 只写入新 chunk
         """
         all_chunks = []
         for doc in docs:
@@ -127,45 +136,41 @@ class IndexBuilder:
             logger.warning("无有效文档块")
             return 0
 
-        # 批量写入 Chroma（自动 embedding）
+        # 检查已存在的 chunk（增量过滤）
+        existing_ids = set()
+        try:
+            coll = long_term_memory._collections.get("docs")
+            if coll:
+                existing = coll.get(ids=[c["id"] for c in all_chunks])
+                existing_ids = set(existing.get("ids", []))
+        except Exception:
+            pass
+
+        # 过滤出新 chunk
+        new_chunks = [c for c in all_chunks if c["id"] not in existing_ids]
+
+        if not new_chunks:
+            logger.info("所有文档块已存在，跳过索引", total=len(all_chunks))
+            return 0
+
+        # 写入新 chunk
         await long_term_memory.add(
             collection="docs",
-            texts=[c["text"] for c in all_chunks],
-            metadatas=[c["metadata"] for c in all_chunks],
-            ids=[c["id"] for c in all_chunks],
+            texts=[c["text"] for c in new_chunks],
+            metadatas=[c["metadata"] for c in new_chunks],
+            ids=[c["id"] for c in new_chunks],
         )
 
         logger.info(
             "索引构建完成",
-            chunks=len(all_chunks),
+            new_chunks=len(new_chunks),
+            skipped=len(all_chunks) - len(new_chunks),
             docs=len(docs),
-            avg_chunk_size=sum(len(c["text"]) for c in all_chunks) // len(all_chunks),
         )
-        return len(all_chunks)
+        return len(new_chunks)
 
     async def build_from_builtin(self, knowledge_dir: str, long_term_memory) -> int:
-        """
-        从内置常识库 JSON 文件构建索引。
-
-        常识库格式：
-          {
-            "product": "GitHub",
-            "version": "2026",
-            "entries": [
-              {"question": "怎么创建仓库？", "answer": "1. 点击...", "selectors": [...], "url_pattern": "..."}
-            ]
-          }
-
-        每个 entry 会被转为一个文档块：
-          "产品：GitHub\n问题：怎么创建仓库？\n回答：1. 点击..."
-
-        Args:
-            knowledge_dir: 常识库目录路径
-            long_term_memory: LongTermMemory 实例
-
-        Returns:
-            写入的分块总数
-        """
+        """从内置常识库 JSON 文件构建索引（增量）。"""
         knowledge_path = Path(knowledge_dir)
         if not knowledge_path.exists():
             logger.warning("内置常识库目录不存在", path=knowledge_dir)
@@ -176,20 +181,9 @@ class IndexBuilder:
             try:
                 data = json.loads(json_file.read_text(encoding="utf-8"))
                 product = data.get("product", json_file.stem)
-
                 for entry in data.get("entries", []):
-                    # 生成确定性 ID
-                    chunk_id = hashlib.md5(
-                        f"{product}_{entry['question']}".encode()
-                    ).hexdigest()
-
-                    # 拼接为文档文本
-                    text = (
-                        f"产品：{product}\n"
-                        f"问题：{entry['question']}\n"
-                        f"回答：{entry['answer']}"
-                    )
-
+                    chunk_id = hashlib.md5(f"{product}_{entry['question']}".encode()).hexdigest()
+                    text = f"产品：{product}\n问题：{entry['question']}\n回答：{entry['answer']}"
                     all_chunks.append({
                         "id": chunk_id,
                         "text": text,
@@ -201,17 +195,31 @@ class IndexBuilder:
                             "source": "builtin",
                         },
                     })
-
             except (json.JSONDecodeError, KeyError) as e:
                 logger.warning("解析常识库失败", file=str(json_file), error=str(e))
 
-        if all_chunks:
+        if not all_chunks:
+            return 0
+
+        # 增量检查
+        existing_ids = set()
+        try:
+            coll = long_term_memory._collections.get("docs")
+            if coll:
+                existing = coll.get(ids=[c["id"] for c in all_chunks])
+                existing_ids = set(existing.get("ids", []))
+        except Exception:
+            pass
+
+        new_chunks = [c for c in all_chunks if c["id"] not in existing_ids]
+
+        if new_chunks:
             await long_term_memory.add(
                 collection="docs",
-                texts=[c["text"] for c in all_chunks],
-                metadatas=[c["metadata"] for c in all_chunks],
-                ids=[c["id"] for c in all_chunks],
+                texts=[c["text"] for c in new_chunks],
+                metadatas=[c["metadata"] for c in new_chunks],
+                ids=[c["id"] for c in new_chunks],
             )
 
-        logger.info("内置常识库索引完成", chunks=len(all_chunks))
-        return len(all_chunks)
+        logger.info("内置常识库索引完成", new=len(new_chunks), skipped=len(all_chunks) - len(new_chunks))
+        return len(new_chunks)

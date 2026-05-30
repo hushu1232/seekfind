@@ -136,17 +136,18 @@ export class Ball3D {
    */
   private async loadThreeJS(): Promise<void> {
     try {
-      const THREE = await import("three");
+      // 按需引入（tree-shaking 优化，不加载整个 three 包）
+      const { Scene, PerspectiveCamera, WebGLRenderer, SphereGeometry, MeshPhongMaterial, AmbientLight, DirectionalLight, Mesh } = await import("three");
 
       // 创建场景
-      this.scene = new THREE.Scene();
+      this.scene = new Scene();
 
       // 创建相机
-      this.camera = new THREE.PerspectiveCamera(45, 1, 0.1, 100);
+      this.camera = new PerspectiveCamera(45, 1, 0.1, 100);
       this.camera.position.z = 3;
 
       // 创建渲染器
-      this.renderer = new THREE.WebGLRenderer({
+      this.renderer = new WebGLRenderer({
         canvas: this.canvas!,
         alpha: true,
         antialias: true,
@@ -155,8 +156,8 @@ export class Ball3D {
       this.renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
 
       // 创建球体
-      const geometry = new THREE.SphereGeometry(1, 32, 32);
-      const material = new THREE.MeshPhongMaterial({
+      const geometry = new SphereGeometry(1, 32, 32);
+      const material = new MeshPhongMaterial({
         color: BALL_COLORS.primary,
         emissive: BALL_COLORS.secondary,
         emissiveIntensity: 0.3,
@@ -164,14 +165,14 @@ export class Ball3D {
         transparent: true,
         opacity: 0.9,
       });
-      this.ballMesh = new THREE.Mesh(geometry, material);
+      this.ballMesh = new Mesh(geometry, material);
       this.scene.add(this.ballMesh);
 
       // 光照
-      this.ambientLight = new THREE.AmbientLight(0xffffff, 0.6);
+      this.ambientLight = new AmbientLight(0xffffff, 0.6);
       this.scene.add(this.ambientLight);
 
-      this.directionalLight = new THREE.DirectionalLight(0xffffff, 0.8);
+      this.directionalLight = new DirectionalLight(0xffffff, 0.8);
       this.directionalLight.position.set(2, 2, 3);
       this.scene.add(this.directionalLight);
 
