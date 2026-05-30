@@ -1,19 +1,47 @@
 # ============================================================
 #  求问 — 后端依赖锁定
 # ============================================================
+
+# --- Web 框架 ---
 fastapi==0.115.*
 uvicorn[standard]==0.34.*
 websockets==14.*
+
+# --- Agent 引擎 ---
 langgraph==0.3.*
 langchain-core==0.3.*
 langchain-openai==0.3.*
+
+# --- 向量库 ---
 chromadb==0.6.*
+
+# --- 检索 ---
 rank-bm25==0.2.*
 jieba==0.42.*
+
+# --- HTTP ---
 httpx==0.28.*
+
+# --- 文档清洗 ---
 trafilatura==1.12.*
+
+# --- 配置 ---
 pydantic-settings==2.*
+
+# --- 日志 ---
 structlog==24.*
+
+# --- 图像处理 ---
 Pillow==11.*
+
+# --- Ollama 客户端 ---
 ollama==0.4.*
+
+# --- 文件上传 ---
 python-multipart==0.0.*
+
+# --- 语音合成 (Phase 4) ---
+edge-tts==6.*
+
+# --- 语音识别 (Phase 4, 可选) ---
+# vosk==0.3.*
