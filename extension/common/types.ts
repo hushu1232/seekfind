@@ -22,8 +22,9 @@ export type ServerMessage =
   | { type: "intent_classified"; intent: IntentType }
   | { type: "agent_token"; token: string }
   | { type: "agent_response"; text: string }
-  | { type: "highlight"; selector: string; fallback_selector?: string; description: string; order: number }
-  | { type: "screenshot_annotated"; image_base64: string }
+  | { type: "highlight"; selector: string; fallback_selector?: string; description: string; order: number; style?: HighlightStyle }
+  | { type: "screenshot_annotated"; image_base64: string; description?: string }
+  | { type: "visual_locate_hint"; description: string; order: number; message: string }
   | { type: "proactive_hint"; message: string };
 
 // ---------------------------------------------------------------------------
@@ -93,11 +94,14 @@ export interface ChatMessage {
 // 高亮指令
 // ---------------------------------------------------------------------------
 
+/** 高亮样式类型 */
+export type HighlightStyle = "pulse" | "glow" | "arrow";
+
 export interface HighlightCommand {
   selector: string;
   fallback_selector?: string;
   description: string;
   order: number;
-  style?: "pulse" | "glow" | "arrow";
+  style?: HighlightStyle;
   duration?: number;
 }
