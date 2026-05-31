@@ -21,6 +21,7 @@ LangGraph 编排：
   达到 fallback_threshold 后切换到云端模型。
 """
 
+import asyncio
 import json
 from typing import Any, AsyncGenerator, Annotated, Sequence
 from typing_extensions import TypedDict
@@ -158,10 +159,10 @@ class QiuWenAgent:
 
     async def initialize(self) -> None:
         """初始化 LLM、工具（带依赖注入）、LangGraph 子图。"""
-        # 本地 LLM
+        # 本地 LLM（V5: API Key 从配置读取，非硬编码）
         base_llm = ChatOpenAI(
             base_url=settings.ollama_base_url,
-            api_key="ollama",
+            api_key=settings.ollama_api_key or "ollama",
             model=settings.ollama_model,
             streaming=True,
             temperature=0.7,
@@ -273,10 +274,18 @@ class QiuWenAgent:
     # 意图分类
     # -----------------------------------------------------------------------
     async def classify_intent(self, question: str) -> str:
+        """V10: 意图分类带超时。"""
         llm = self._get_active_llm()
-        resp = await llm.ainvoke([HumanMessage(content=INTENT_CLASSIFY_PROMPT.format(question=question))])
-        intent = resp.content.strip().lower()
-        return intent if intent in ("doc_question", "guide_request", "chat") else "doc_question"
+        try:
+            resp = await asyncio.wait_for(
+                llm.ainvoke([HumanMessage(content=INTENT_CLASSIFY_PROMPT.format(question=question))]),
+                timeout=10,  # 10 秒超时
+            )
+            intent = resp.content.strip().lower()
+            return intent if intent in ("doc_question", "guide_request", "chat") else "doc_question"
+        except asyncio.TimeoutError:
+            logger.warning("意图分类超时，默认 doc_question")
+            return "doc_question"
 
     # -----------------------------------------------------------------------
     # 流式回复（主入口）
@@ -310,7 +319,7 @@ class QiuWenAgent:
         self, graph, system_prompt: str, text: str,
         session: ShortTermMemory, page_info: str,
     ) -> AsyncGenerator[dict, None]:
-        """执行 LangGraph 子图（RAG / 引导通用）。"""
+        """执行 LangGraph 子图（RAG / 引导通用）。V10: 添加超时控制。"""
         context = await self._retrieve_context(text)
 
         messages = [
@@ -321,6 +330,7 @@ class QiuWenAgent:
 
         full_response = ""
         has_tool_calls = False
+        TOOL_TIMEOUT = 30  # V10: 工具调用超时 30 秒
 
         async for event in graph.astream({"messages": messages}, stream_mode="updates"):
             for node_name, node_output in event.items():

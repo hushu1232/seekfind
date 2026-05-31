@@ -61,6 +61,7 @@ class Settings(BaseSettings):
     # --- 本地模型 (Ollama) -----------------------------------------------
     # Ollama 提供 OpenAI 兼容的 /v1 端点，可直接用 langchain-openai 对接
     ollama_base_url: str = "http://host.docker.internal:11434/v1"
+    ollama_api_key: str = ""                      # V5: 可配置 API Key（默认 "ollama"）
     ollama_model: str = "qwen2.5:7b"              # 默认推理模型
     ollama_embedding_model: str = "nomic-embed-text"  # 768 维，中英文均支持
 
@@ -83,6 +84,9 @@ class Settings(BaseSettings):
 
     # --- 日志 ------------------------------------------------------------
     log_level: str = "INFO"
+
+    # --- 知识库版本（V15）-----------------------------------------------
+    knowledge_version: str = "1.0.0"  # 更新知识库时递增，触发索引重建
 
     # --- 隐私 ------------------------------------------------------------
     privacy_sanitize_enabled: bool = True     # 自动脱敏（密码/邮箱/手机号）

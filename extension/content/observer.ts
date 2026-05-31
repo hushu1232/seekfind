@@ -12,6 +12,30 @@
  * 隐私：事件采集默认关闭，需用户在设置中开启。
  */
 
+import { safeSend, isAlive } from "../common/chrome-safe";
+
+// V8: 全局错误边界 — 只做静默抑制，不调用 cleanup()
+// cleanup() 由 safeSend 的同步检查触发，确保只执行一次
+window.addEventListener("error", (event) => {
+  const msg = event.error?.message || event.message;
+  if (msg?.includes("Extension context invalidated") || msg?.includes("receiving end does not exist")) {
+    event.preventDefault();
+    return;
+  }
+  console.warn("[求问] Content Script 错误:", msg);
+  event.preventDefault();
+});
+window.addEventListener("unhandledrejection", (event) => {
+  const msg = event.reason?.message || String(event.reason || "");
+  if (msg.includes("Extension context invalidated") || msg.includes("receiving end does not exist") || msg.includes("message port closed")) {
+    event.preventDefault();
+    event.stopPropagation();
+    return;
+  }
+  console.warn("[求问] 未处理的 Promise 拒绝:", msg);
+  event.preventDefault();
+});
+
 import { INTERNAL_MSG } from "../common/constants";
 import type { PageEvent } from "../common/types";
 import { injectAtStart } from "../common/browser-compat";
@@ -43,7 +67,7 @@ injectAtStart(() => {
   // 页面就绪上报
   // -----------------------------------------------------------------------
   function notifyPageReady(): void {
-    chrome.runtime.sendMessage({
+    safeSend({
       type: INTERNAL_MSG.PAGE_READY,
       url: window.location.href,
       title: document.title,
@@ -76,7 +100,7 @@ injectAtStart(() => {
     if (msg.type === "qiuwen:stop_recording") {
       recordingMode = false;
       // 发送录制结果到 Service Worker
-      chrome.runtime.sendMessage({
+      safeSend({
         type: "qiuwen:recorded_steps",
         steps: recordedSteps,
       });
@@ -86,7 +110,7 @@ injectAtStart(() => {
     // 浏览器控制：无障碍树快照
     if (msg.type === INTERNAL_MSG.SNAPSHOT) {
       const result = takeSnapshot(msg.options || {});
-      chrome.runtime.sendMessage({
+      safeSend({
         type: INTERNAL_MSG.SNAPSHOT_RESULT,
         ...result,
       });
@@ -95,7 +119,7 @@ injectAtStart(() => {
     // 浏览器控制：语义查找
     if (msg.type === INTERNAL_MSG.FIND_ELEMENT) {
       const ref = findElement(msg.strategy, msg.value, msg.options || {});
-      chrome.runtime.sendMessage({
+      safeSend({
         type: INTERNAL_MSG.FIND_RESULT,
         ref,
         strategy: msg.strategy,
@@ -106,7 +130,7 @@ injectAtStart(() => {
     // 浏览器控制：执行交互
     if (msg.type === INTERNAL_MSG.EXECUTE_INTERACTION) {
       const result = executeInteraction(msg.ref, msg.action, msg.value);
-      chrome.runtime.sendMessage({
+      safeSend({
         type: INTERNAL_MSG.INTERACTION_RESULT,
         ...result,
         ref: msg.ref,
@@ -116,11 +140,12 @@ injectAtStart(() => {
   });
 
   // -----------------------------------------------------------------------
-  // 事件发送
+  // 事件发送（失效后静默跳过）
   // -----------------------------------------------------------------------
   function sendPageEvent(event: PageEvent): void {
+    if (!isAlive()) return;
     if (!monitoringEnabled && !recordingMode) return;
-    chrome.runtime.sendMessage({
+    safeSend({
       type: INTERNAL_MSG.PAGE_EVENT,
       event,
     });
@@ -132,6 +157,7 @@ injectAtStart(() => {
   document.addEventListener(
     "click",
     (e) => {
+      if (!isAlive()) return; // 扩展已失效，忽略
       const target = e.target as HTMLElement;
       const selector = getSelector(target);
       const now = Date.now();
@@ -153,7 +179,7 @@ injectAtStart(() => {
         };
         recordedSteps.push(step);
         // 实时上报到后端
-        chrome.runtime.sendMessage({
+        safeSend({
           type: "qiuwen:flow_step",
           step,
         });
@@ -164,7 +190,7 @@ injectAtStart(() => {
         clickCount++;
         if (clickCount >= CONFUSION_THRESHOLD) {
           // 发送困惑提示
-          chrome.runtime.sendMessage({
+          safeSend({
             type: "qiuwen:user_confused",
             selector,
             clickCount,
@@ -187,6 +213,7 @@ injectAtStart(() => {
   document.addEventListener(
     "input",
     (e) => {
+      if (!isAlive()) return; // 扩展已失效，忽略
       const target = e.target as HTMLElement;
 
       // 隐私保护：密码字段不采集
@@ -215,7 +242,7 @@ injectAtStart(() => {
           timestamp: Date.now(),
         };
         recordedSteps.push(step);
-        chrome.runtime.sendMessage({
+        safeSend({
           type: "qiuwen:flow_step",
           step,
         });
@@ -230,6 +257,7 @@ injectAtStart(() => {
   let lastUrl = window.location.href;
 
   const urlObserver = new MutationObserver(() => {
+    if (!isAlive()) return; // 扩展已失效，忽略
     if (window.location.href !== lastUrl) {
       lastUrl = window.location.href;
       sendPageEvent({
@@ -247,14 +275,27 @@ injectAtStart(() => {
           timestamp: Date.now(),
         };
         recordedSteps.push(step);
-        chrome.runtime.sendMessage({
+        safeSend({
           type: "qiuwen:flow_step",
           step,
         });
       }
     }
   });
-  urlObserver.observe(document.body, { childList: true, subtree: true });
+
+  // 等待 document.body 可用后再 observe（document_start 时 body 可能不存在）
+  function startUrlObserver(): void {
+    if (document.body) {
+      urlObserver.observe(document.body, { childList: true, subtree: true });
+    } else {
+      document.addEventListener("DOMContentLoaded", () => {
+        if (document.body) {
+          urlObserver.observe(document.body, { childList: true, subtree: true });
+        }
+      });
+    }
+  }
+  startUrlObserver();
 
   // 拦截 pushState / replaceState
   const origPush = history.pushState;
@@ -262,6 +303,7 @@ injectAtStart(() => {
 
   history.pushState = function (...args) {
     origPush.apply(this, args);
+    if (!isAlive()) return;
     if (window.location.href !== lastUrl) {
       lastUrl = window.location.href;
       sendPageEvent({ event_type: "route_change", timestamp: Date.now(), url: lastUrl });
@@ -270,6 +312,7 @@ injectAtStart(() => {
 
   history.replaceState = function (...args) {
     origReplace.apply(this, args);
+    if (!isAlive()) return;
     if (window.location.href !== lastUrl) {
       lastUrl = window.location.href;
       sendPageEvent({ event_type: "route_change", timestamp: Date.now(), url: lastUrl });

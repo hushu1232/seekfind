@@ -177,6 +177,7 @@ export class SkeletonBall {
         listening: "聆听中...",
         watching: "观察中...",
         sleeping: "休眠中",
+        error: "出错了",
       };
       this.stateIndicator.textContent = stateTexts[state] || "";
     }
@@ -190,6 +191,7 @@ export class SkeletonBall {
         listening: "linear-gradient(135deg, #5BC0DE 0%, #85D4E8 50%, #A8E4F0 100%)",
         watching: "linear-gradient(135deg, #4A90D9 0%, #6BA5E7 50%, #8CC4F0 100%)",
         sleeping: "linear-gradient(135deg, #7F8C9B 0%, #9BA8B5 50%, #B8C4CF 100%)",
+        error: "linear-gradient(135deg, #EF4444 0%, #F87171 50%, #FCA5A5 100%)",
       };
       this.skeletonEl.style.background = stateColors[state] || stateColors.idle;
     }

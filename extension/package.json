@@ -5,9 +5,9 @@
   "type": "module",
   "scripts": {
     "dev": "vite",
-    "build": "tsc && vite build && node scripts/build.js chrome",
-    "build:chrome": "tsc && vite build && node scripts/build.js chrome",
-    "build:firefox": "tsc && vite build && node scripts/build.js firefox",
+    "build": "tsc && vite build && node scripts/build-content.js && node scripts/build.js chrome",
+    "build:chrome": "tsc && vite build && node scripts/build-content.js && node scripts/build.js chrome",
+    "build:firefox": "tsc && vite build && node scripts/build-content.js && node scripts/build.js firefox",
     "preview": "vite preview"
   },
   "dependencies": {

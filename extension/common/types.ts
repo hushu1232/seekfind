@@ -31,7 +31,8 @@ export type ServerMessage =
   | { type: "visual_locate_hint"; description: string; order: number; message: string }
   | { type: "proactive_hint"; message: string }
   | { type: "snapshot_result"; text: string; refCount: number; url: string; title: string }
-  | { type: "interaction_result"; success: boolean; error?: string };
+  | { type: "interaction_result"; success: boolean; error?: string }
+  | { type: "agent_error"; error: string };
 
 // ---------------------------------------------------------------------------
 // 意图类型
@@ -82,7 +83,8 @@ export type BallState =
   | "speaking"   // 说话中
   | "listening"  // 监听中
   | "watching"   // 观察中
-  | "sleeping";  // 休眠
+  | "sleeping"   // 休眠
+  | "error";     // 错误
 
 // ---------------------------------------------------------------------------
 // 对话消息

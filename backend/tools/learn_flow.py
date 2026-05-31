@@ -121,6 +121,28 @@ class LearnFlowTool:
             "message": f"开始录制「{flow_name}」，请执行操作...",
         }, ensure_ascii=False)
 
+    def _auto_save(self) -> None:
+        """V16: 自动保存中间状态（不中断录制）。"""
+        if not self._current_steps or not self._current_flow_name:
+            return
+        # 保存到本地临时文件（不依赖 Chroma）
+        import tempfile, os
+        try:
+            cache_dir = os.path.join(tempfile.gettempdir(), "qiuwen_flows")
+            os.makedirs(cache_dir, exist_ok=True)
+            cache_file = os.path.join(cache_dir, f"{self._current_flow_name}.json")
+            flow_data = {
+                "name": self._current_flow_name,
+                "steps": self._current_steps,
+                "step_count": len(self._current_steps),
+                "auto_saved": True,
+            }
+            with open(cache_file, "w", encoding="utf-8") as f:
+                json.dump(flow_data, f, ensure_ascii=False, indent=2)
+            logger.debug("操作流自动保存", steps=len(self._current_steps), path=cache_file)
+        except Exception as e:
+            logger.debug("自动保存失败", error=str(e))
+
     async def _stop_recording(self, long_term_memory=None) -> str:
         """停止录制并保存。"""
         if not self._is_recording:
@@ -152,6 +174,7 @@ class LearnFlowTool:
     def add_step(self, action: str, selector: str, description: str, value: str = "") -> None:
         """
         添加一个录制步骤（由 observer.ts 调用）。
+        V16: 每 5 步自动保存到 Chroma，防止崩溃丢失。
 
         Args:
             action: 操作类型 (click/input/scroll/navigate)
@@ -170,6 +193,10 @@ class LearnFlowTool:
             "value": value,
         })
         logger.debug("录制步骤", action=action, selector=selector)
+
+        # V16: 每 5 步自动保存（防止崩溃丢失）
+        if len(self._current_steps) % 5 == 0:
+            self._auto_save()
 
     async def _replay(self, flow_name: str, long_term_memory=None) -> str:
         """回放操作流。"""

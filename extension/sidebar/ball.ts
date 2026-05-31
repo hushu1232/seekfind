@@ -40,13 +40,14 @@ const BALL_COLORS = {
 };
 
 /** 帧率配置 */
-const FPS = {
+const FPS: Record<string, number> = {
   idle: 60,
   thinking: 60,
   speaking: 60,
   listening: 30,
   watching: 30,
   sleeping: 10,
+  error: 60,
 };
 
 // ---------------------------------------------------------------------------
@@ -239,6 +240,11 @@ export class Ball3D {
         material.color.setHex(BALL_COLORS.sleeping);
         material.emissive.setHex(BALL_COLORS.sleeping);
         this.rotationSpeed = 0.001;
+        break;
+      case "error":
+        material.color.setHex(BALL_COLORS.error);
+        material.emissive.setHex(BALL_COLORS.error);
+        this.rotationSpeed = 0.03;
         break;
     }
   }

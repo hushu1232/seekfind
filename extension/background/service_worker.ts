@@ -18,6 +18,16 @@ import { WSManager } from "./ws-manager";
 import { StateStore } from "./state-store";
 
 // ---------------------------------------------------------------------------
+// V8: 全局错误边界
+// ---------------------------------------------------------------------------
+self.addEventListener("error", (event) => {
+  console.error("[求问] Service Worker 错误:", event.error?.message || event.message);
+});
+self.addEventListener("unhandledrejection", (event) => {
+  console.error("[求问] 未处理的 Promise 拒绝:", event.reason?.message || event.reason);
+});
+
+// ---------------------------------------------------------------------------
 // 模块实例
 // ---------------------------------------------------------------------------
 const wsManager = new WSManager();
@@ -63,6 +73,11 @@ function handleServerMessage(msg: ServerMessage): void {
 
     case "highlight":
       // 保存高亮指令（用于页面切换后恢复）
+      // V9: 限制上限，防止内存泄漏
+      const MAX_HIGHLIGHTS = 50;
+      if (activeHighlights.length >= MAX_HIGHLIGHTS) {
+        activeHighlights.shift(); // 移除最旧的
+      }
       activeHighlights.push({
         selector: msg.selector,
         fallback_selector: msg.fallback_selector,
@@ -97,16 +112,32 @@ function handleServerMessage(msg: ServerMessage): void {
       // 不清除高亮 — 用户可能还需要看指引
       // 高亮会在用户发起新问题时自动替换
       break;
+
+    case "agent_error":
+      setBallState("error");
+      break;
   }
 }
 
 // ---------------------------------------------------------------------------
-// 球体状态
+// 球体状态（同步到 Sidebar + 悬浮球）
 // ---------------------------------------------------------------------------
 function setBallState(state: BallState): void {
   ballState = state;
   store.setBallState(state);
+  // 广播到 Sidebar
   broadcastToSidebar({ type: INTERNAL_MSG.UPDATE_BALL_STATE, state });
+  // 广播到当前 Tab 的悬浮球
+  broadcastToFloatBall({ type: INTERNAL_MSG.UPDATE_BALL_STATE, state });
+}
+
+/** 广播消息到当前活跃 Tab 的 Content Script（悬浮球） */
+function broadcastToFloatBall(msg: any): void {
+  chrome.tabs.query({ active: true, currentWindow: true }, (tabs) => {
+    if (tabs[0]?.id) {
+      chrome.tabs.sendMessage(tabs[0].id, msg).catch(() => {});
+    }
+  });
 }
 
 // ---------------------------------------------------------------------------
@@ -171,7 +202,8 @@ chrome.runtime.onMessage.addListener((msg, sender, sendResponse) => {
       break;
 
     case INTERNAL_MSG.CAPTURE_TAB:
-      chrome.tabs.captureVisibleTab({ format: "png" }, (dataUrl) => {
+      // V17: 使用 JPEG 压缩（quality=70），比 PNG 小 5-10 倍
+      chrome.tabs.captureVisibleTab({ format: "jpeg", quality: 70 }, (dataUrl) => {
         sendResponse({ image: dataUrl });
       });
       return true;
@@ -187,6 +219,45 @@ chrome.runtime.onInstalled.addListener((details) => {
     store.initializeDefaults();
   }
 });
+
+// 点击扩展图标或悬浮球时打开侧边栏
+chrome.action.onClicked.addListener(async (tab) => {
+  await openSidebar(tab.id!);
+});
+
+// 悬浮球点击 → 打开侧边栏
+chrome.runtime.onMessage.addListener((msg, sender) => {
+  if (msg.type === "FLOAT_BALL_CLICK") {
+    chrome.tabs.query({ active: true, currentWindow: true }, (tabs) => {
+      if (tabs[0]?.id) openSidebar(tabs[0].id);
+    });
+  }
+});
+
+async function openSidebar(tabId: number): Promise<void> {
+  try {
+    await (chrome as any).sidePanel.open({ tabId });
+  } catch (e) {
+    console.warn("[求问] sidePanel.open 失败，尝试降级:", e);
+    try {
+      await chrome.windows.create({
+        url: chrome.runtime.getURL("sidebar/index.html"),
+        type: "popup",
+        width: 400,
+        height: 600,
+      });
+    } catch (e2) {
+      console.error("[求问] 无法打开侧边栏:", e2);
+    }
+  }
+}
+
+// 设置侧边栏行为：点击图标时自动打开
+try {
+  (chrome as any).sidePanel?.setPanelBehavior?.({ openPanelOnActionClick: true });
+} catch (e) {
+  console.warn("[求问] setPanelBehavior 不可用:", e);
+}
 
 // 启动时恢复状态并连接
 (async () => {

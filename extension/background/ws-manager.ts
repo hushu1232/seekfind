@@ -5,6 +5,7 @@
  * 职责：
  *   - WebSocket 连接 / 断线重连 / 心跳
  *   - 连接状态事件通知
+ *   - 速率限制（防刷）
  *
  * 从 service_worker.ts 拆分而来，降低单文件复杂度。
  */
@@ -17,6 +18,10 @@ type StatusCallback = (connected: boolean) => void;
 /** 消息回调 */
 type MessageCallback = (msg: ServerMessage) => void;
 
+/** 速率限制配置 */
+const RATE_LIMIT_MAX = 10; // 每秒最多发送 10 条消息
+const RATE_LIMIT_WINDOW = 1000; // 1 秒窗口
+
 export class WSManager {
   private ws: WebSocket | null = null;
   private reconnectTimer: ReturnType<typeof setTimeout> | null = null;
@@ -24,10 +29,11 @@ export class WSManager {
   private onStatus: StatusCallback | null = null;
   private onMessage: MessageCallback | null = null;
 
+  // 速率限制
+  private sendTimestamps: number[] = [];
+
   /**
    * 注册回调。
-   * @param onStatus 连接状态变化回调
-   * @param onMessage 收到消息回调
    */
   setCallbacks(onStatus: StatusCallback, onMessage: MessageCallback): void {
     this.onStatus = onStatus;
@@ -71,11 +77,31 @@ export class WSManager {
     };
   }
 
-  /** 发送消息。 */
+  /** 发送消息（带速率限制）。 */
   send(msg: ClientMessage): void {
-    if (this.ws && this.ws.readyState === WebSocket.OPEN) {
-      this.ws.send(JSON.stringify(msg));
+    if (!this.ws || this.ws.readyState !== WebSocket.OPEN) return;
+
+    // 速率限制检查
+    if (!this.checkRateLimit()) {
+      console.warn("[WSManager] 速率限制，消息被丢弃");
+      return;
     }
+
+    this.ws.send(JSON.stringify(msg));
+  }
+
+  /** 速率限制检查。返回 true 表示允许发送。 */
+  private checkRateLimit(): boolean {
+    const now = Date.now();
+    // 清理窗口外的旧时间戳
+    this.sendTimestamps = this.sendTimestamps.filter((t) => now - t < RATE_LIMIT_WINDOW);
+
+    if (this.sendTimestamps.length >= RATE_LIMIT_MAX) {
+      return false;
+    }
+
+    this.sendTimestamps.push(now);
+    return true;
   }
 
   /** 是否已连接。 */

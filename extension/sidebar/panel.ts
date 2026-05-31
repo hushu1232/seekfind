@@ -37,15 +37,25 @@ let isProcessing = false;
 let currentAssistantEl: HTMLDivElement | null = null;
 
 // ---------------------------------------------------------------------------
-// 初始化：恢复聊天历史
+// V12: 初始化：恢复完整状态
 // ---------------------------------------------------------------------------
-chrome.storage.local.get([STORAGE_KEYS.CHAT_HISTORY], (data) => {
-  const history: ChatMessage[] = data[STORAGE_KEYS.CHAT_HISTORY] || [];
-  for (const msg of history.slice(-20)) {
-    appendMessage(msg.role, msg.content, false);
+chrome.storage.local.get(
+  [STORAGE_KEYS.CHAT_HISTORY, STORAGE_KEYS.BALL_STATE, STORAGE_KEYS.SESSION_ID],
+  (data) => {
+    // 恢复聊天历史（最近 50 条）
+    const history: ChatMessage[] = data[STORAGE_KEYS.CHAT_HISTORY] || [];
+    for (const msg of history.slice(-50)) {
+      appendMessage(msg.role, msg.content, false);
+    }
+    scrollToBottom();
+
+    // 恢复球体状态
+    const ballState = data[STORAGE_KEYS.BALL_STATE];
+    if (ballState) {
+      updateBallState(ballState);
+    }
   }
-  scrollToBottom();
-});
+);
 
 // ---------------------------------------------------------------------------
 // 启动状态检测
@@ -76,15 +86,22 @@ async function checkSystemStatus(): Promise<void> {
 }
 
 // ---------------------------------------------------------------------------
-// 防抢答：输入防抖 + 发送锁
+// V7: 输入长度限制 + 防抢答
 // ---------------------------------------------------------------------------
+const MAX_INPUT_LENGTH = 2000;
 let inputDebounceTimer: ReturnType<typeof setTimeout> | null = null;
-const DEBOUNCE_MS = 300; // 用户停止输入 300ms 后才允许发送
+const DEBOUNCE_MS = 300;
 let lastInputTime = 0;
 
-// 输入防抖：用户打字时重置计时器
+// 设置输入框最大长度
+userInputEl.maxLength = MAX_INPUT_LENGTH;
+
 userInputEl.addEventListener("input", () => {
   lastInputTime = Date.now();
+  // V7: 超长输入截断提示
+  if (userInputEl.value.length > MAX_INPUT_LENGTH) {
+    userInputEl.value = userInputEl.value.slice(0, MAX_INPUT_LENGTH);
+  }
   if (inputDebounceTimer) clearTimeout(inputDebounceTimer);
   inputDebounceTimer = setTimeout(() => {
     inputDebounceTimer = null;
@@ -98,14 +115,12 @@ function sendMessage(): void {
   const text = userInputEl.value.trim();
   if (!text || isProcessing) return;
 
-  // 防抢答：如果用户还在输入（防抖计时器未清），等待后重试
   if (inputDebounceTimer) {
     clearTimeout(inputDebounceTimer);
     inputDebounceTimer = null;
     sendBtnEl.textContent = "⏳";
     setTimeout(() => {
       sendBtnEl.textContent = "发送";
-      // 防抖结束后自动发送
       const retryText = userInputEl.value.trim();
       if (retryText && !isProcessing) {
         appendMessage("user", retryText);
@@ -165,14 +180,12 @@ function startRecording(name: string): void {
   recordBtnEl.classList.add("recording");
   appendMessage("assistant", `🔴 开始录制「${name}」，请在页面上执行操作...`);
 
-  // 通知 Content Script 开始录制
   chrome.tabs.query({ active: true, currentWindow: true }, (tabs) => {
     if (tabs[0]?.id) {
       chrome.tabs.sendMessage(tabs[0].id, { type: INTERNAL_MSG.START_RECORDING });
     }
   });
 
-  // 通知后端
   chrome.runtime.sendMessage({
     type: INTERNAL_MSG.SEND_MESSAGE,
     text: JSON.stringify({
@@ -189,14 +202,12 @@ function stopRecording(): void {
   recordBtnEl.classList.remove("recording");
   appendMessage("assistant", "⏹ 录制已停止，操作流已保存。");
 
-  // 通知 Content Script 停止录制
   chrome.tabs.query({ active: true, currentWindow: true }, (tabs) => {
     if (tabs[0]?.id) {
       chrome.tabs.sendMessage(tabs[0].id, { type: INTERNAL_MSG.STOP_RECORDING });
     }
   });
 
-  // 通知后端
   chrome.runtime.sendMessage({
     type: INTERNAL_MSG.SEND_MESSAGE,
     text: JSON.stringify({
@@ -216,12 +227,16 @@ chrome.runtime.onMessage.addListener((msg) => {
 
   switch (payload.type) {
     case "agent_thinking": {
-      // 立即显示思考状态（带时间戳）
       currentAssistantEl = appendMessage("assistant", "", true);
       currentAssistantEl.dataset.thinkStart = String(Date.now());
       const thinkText = currentAssistantEl.querySelector(".message-text");
       if (thinkText) {
-        thinkText.innerHTML = '<span class="thinking-dots">思考中</span>';
+        // 安全：使用 DOM API 而非 innerHTML
+        const span = document.createElement("span");
+        span.className = "thinking-dots";
+        span.textContent = "思考中";
+        thinkText.textContent = "";
+        thinkText.appendChild(span);
         animateThinkingDots(thinkText as HTMLElement);
       }
       break;
@@ -229,13 +244,16 @@ chrome.runtime.onMessage.addListener((msg) => {
 
     case "agent_token": {
       if (currentAssistantEl) {
-        // 第一个 token 到达：停止思考动画，开始流式显示
         currentAssistantEl.classList.remove("thinking");
         const textNode = currentAssistantEl.querySelector(".message-text");
         if (textNode) {
           textNode.textContent += payload.token;
         } else {
-          currentAssistantEl.innerHTML = `<span class="message-text">${escapeHtml(payload.token)}</span>`;
+          // 安全：使用 DOM API
+          const span = document.createElement("span");
+          span.className = "message-text";
+          span.textContent = payload.token;
+          currentAssistantEl.appendChild(span);
         }
         scrollToBottom();
       }
@@ -275,31 +293,26 @@ chrome.runtime.onMessage.addListener((msg) => {
 });
 
 // ---------------------------------------------------------------------------
-// UI 组件
+// UI 组件（安全：全部使用 DOM API，无 innerHTML 拼接用户内容）
 // ---------------------------------------------------------------------------
 
 /**
- * 追加消息气泡。
+ * 追加消息气泡。使用 DOM API 避免 XSS。
  */
 function appendMessage(role: "user" | "assistant", content: string, thinking = false): HTMLDivElement {
   const div = document.createElement("div");
   div.className = `message ${role}${thinking ? " thinking" : ""}`;
-  div.innerHTML = `<span class="message-text">${escapeHtml(content)}</span>`;
+  const span = document.createElement("span");
+  span.className = "message-text";
+  span.textContent = content;  // 安全：textContent 自动转义
+  div.appendChild(span);
   messagesEl.appendChild(div);
   scrollToBottom();
   return div;
 }
 
 /**
- * 追加步骤卡片（分步指引 + 反馈按钮）。
- *
- * 结构：
- *   ┌─────────────────────────┐
- *   │  第 N 步                │
- *   │  描述文字               │
- *   │                         │
- *   │  [✅ 指对了]  [❌ 指错了] │
- *   └─────────────────────────┘
+ * 追加步骤卡片。使用 DOM API 构建，避免 innerHTML 拼接。
  */
 function appendStepCard(
   order: number,
@@ -310,26 +323,53 @@ function appendStepCard(
   const card = document.createElement("div");
   card.className = "step-card";
 
-  // 样式指示器
   const styleIcon = style === "glow" ? "✨" : style === "arrow" ? "👉" : "🔵";
 
-  card.innerHTML = `
-    <div class="step-header">${styleIcon} 第 ${order} 步</div>
-    <div class="step-desc">${escapeHtml(description)}</div>
-    ${selector ? `<div class="step-selector" style="font-size:11px;color:#999;margin-bottom:8px;">选择器: ${escapeHtml(selector)}</div>` : ""}
-    <div class="feedback-btns">
-      <button class="btn-correct" data-step="${order}" data-selector="${escapeHtml(selector)}">✅ 指对了</button>
-      <button class="btn-wrong" data-step="${order}" data-selector="${escapeHtml(selector)}">❌ 指错了</button>
-    </div>
-  `;
+  // 使用 DOM API 安全构建
+  const header = document.createElement("div");
+  header.className = "step-header";
+  header.textContent = `${styleIcon} 第 ${order} 步`;
+
+  const desc = document.createElement("div");
+  desc.className = "step-desc";
+  desc.textContent = description;
+
+  card.appendChild(header);
+  card.appendChild(desc);
+
+  if (selector) {
+    const selDiv = document.createElement("div");
+    selDiv.className = "step-selector";
+    selDiv.style.cssText = "font-size:11px;color:#999;margin-bottom:8px;";
+    selDiv.textContent = `选择器: ${selector}`;
+    card.appendChild(selDiv);
+  }
+
+  const btnContainer = document.createElement("div");
+  btnContainer.className = "feedback-btns";
+
+  const correctBtn = document.createElement("button");
+  correctBtn.className = "btn-correct";
+  correctBtn.dataset.step = String(order);
+  correctBtn.dataset.selector = selector;
+  correctBtn.textContent = "✅ 指对了";
+
+  const wrongBtn = document.createElement("button");
+  wrongBtn.className = "btn-wrong";
+  wrongBtn.dataset.step = String(order);
+  wrongBtn.dataset.selector = selector;
+  wrongBtn.textContent = "❌ 指错了";
+
+  btnContainer.appendChild(correctBtn);
+  btnContainer.appendChild(wrongBtn);
+  card.appendChild(btnContainer);
 
   // 反馈按钮事件
-  card.querySelectorAll(".feedback-btns button").forEach((btn) => {
+  [correctBtn, wrongBtn].forEach((btn) => {
     btn.addEventListener("click", () => {
       const isCorrect = btn.classList.contains("btn-correct");
-      const stepId = (btn as HTMLElement).dataset.step || "";
+      const stepId = btn.dataset.step || "";
 
-      // 发送反馈
       chrome.runtime.sendMessage({
         type: INTERNAL_MSG.SEND_MESSAGE,
         text: JSON.stringify({
@@ -338,15 +378,11 @@ function appendStepCard(
         }),
       });
 
-      // 更新 UI
       btn.textContent = isCorrect ? "✅ 已记录" : "❌ 已记录";
-      (btn as HTMLButtonElement).disabled = true;
+      btn.disabled = true;
 
-      // 禁用另一个按钮
-      const sibling = btn.classList.contains("btn-correct")
-        ? btn.parentElement?.querySelector(".btn-wrong")
-        : btn.parentElement?.querySelector(".btn-correct");
-      if (sibling) (sibling as HTMLButtonElement).disabled = true;
+      const sibling = btn.classList.contains("btn-correct") ? wrongBtn : correctBtn;
+      sibling.disabled = true;
     });
   });
 
@@ -355,33 +391,44 @@ function appendStepCard(
 }
 
 /**
- * 追加截图标注卡片。
- *
- * 显示后端返回的标注后截图（base64 PNG）。
+ * 追加截图标注卡片。使用 DOM API 安全构建。
  */
 function appendScreenshotCard(imageBase64: string, description?: string): void {
   const card = document.createElement("div");
   card.className = "screenshot-card";
-  card.style.cssText = `
-    background: white;
-    border: 1px solid #e9ecef;
-    border-radius: 12px;
-    padding: 12px;
-    margin-top: 8px;
-    max-width: 100%;
-  `;
+  card.style.cssText = "background:white;border:1px solid #e9ecef;border-radius:12px;padding:12px;margin-top:8px;max-width:100%;";
 
-  card.innerHTML = `
-    ${description ? `<div style="font-size:13px;color:#4A90D9;font-weight:600;margin-bottom:8px;">📸 ${escapeHtml(description)}</div>` : ""}
-    <img src="data:image/png;base64,${imageBase64}" style="width:100%;border-radius:8px;" alt="截图标注" />
-    <div class="feedback-btns" style="margin-top:8px;">
-      <button class="btn-correct">✅ 位置正确</button>
-      <button class="btn-wrong">❌ 位置不对</button>
-    </div>
-  `;
+  if (description) {
+    const descDiv = document.createElement("div");
+    descDiv.style.cssText = "font-size:13px;color:#4A90D9;font-weight:600;margin-bottom:8px;";
+    descDiv.textContent = `📸 ${description}`;
+    card.appendChild(descDiv);
+  }
 
-  // 反馈按钮
-  card.querySelectorAll(".feedback-btns button").forEach((btn) => {
+  // 安全：base64 图片通过 img.src 设置，不经过 innerHTML
+  const img = document.createElement("img");
+  img.src = `data:image/png;base64,${imageBase64}`;
+  img.style.cssText = "width:100%;border-radius:8px;";
+  img.alt = "截图标注";
+  card.appendChild(img);
+
+  const btnContainer = document.createElement("div");
+  btnContainer.className = "feedback-btns";
+  btnContainer.style.marginTop = "8px";
+
+  const correctBtn = document.createElement("button");
+  correctBtn.className = "btn-correct";
+  correctBtn.textContent = "✅ 位置正确";
+
+  const wrongBtn = document.createElement("button");
+  wrongBtn.className = "btn-wrong";
+  wrongBtn.textContent = "❌ 位置不对";
+
+  btnContainer.appendChild(correctBtn);
+  btnContainer.appendChild(wrongBtn);
+  card.appendChild(btnContainer);
+
+  [correctBtn, wrongBtn].forEach((btn) => {
     btn.addEventListener("click", () => {
       const isCorrect = btn.classList.contains("btn-correct");
       chrome.runtime.sendMessage({
@@ -392,7 +439,7 @@ function appendScreenshotCard(imageBase64: string, description?: string): void {
         }),
       });
       btn.textContent = isCorrect ? "✅ 已记录" : "❌ 已记录";
-      (btn as HTMLButtonElement).disabled = true;
+      btn.disabled = true;
     });
   });
 
@@ -401,7 +448,7 @@ function appendScreenshotCard(imageBase64: string, description?: string): void {
 }
 
 function updateBallState(state: string): void {
-  console.log("[求问] 球体状态:", state);
+  // 生产环境不输出 console
 }
 
 function scrollToBottom(): void {
@@ -409,22 +456,28 @@ function scrollToBottom(): void {
 }
 
 /**
- * 思考中动画：每 500ms 切换 "思考中" / "思考中." / "思考中.." / "思考中..."
+ * 思考中动画。使用 textContent 而非 innerHTML。
  */
 function animateThinkingDots(el: HTMLElement): void {
   let dots = 0;
   const interval = setInterval(() => {
-    // 检查是否还在思考状态
     if (!el.closest(".thinking")) {
       clearInterval(interval);
       return;
     }
     dots = (dots + 1) % 4;
     const dotsStr = ".".repeat(dots);
-    el.innerHTML = `<span class="thinking-dots">思考中${dotsStr}</span>`;
+    // 安全：使用 textContent
+    const span = el.querySelector(".thinking-dots");
+    if (span) {
+      span.textContent = `思考中${dotsStr}`;
+    }
   }, 500);
 }
 
+/**
+ * HTML 转义（保留用于需要 innerHTML 的边界情况）。
+ */
 function escapeHtml(text: string): string {
   const div = document.createElement("div");
   div.textContent = text;

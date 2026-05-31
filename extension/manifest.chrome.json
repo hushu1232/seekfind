@@ -8,7 +8,6 @@
     "activeTab",
     "storage",
     "tabs",
-    "scripting",
     "webNavigation"
   ],
   "host_permissions": [
@@ -38,7 +37,8 @@
         "content/highlight.js",
         "content/particle.js",
         "content/privacy.js",
-        "content/screenshot.js"
+        "content/screenshot.js",
+        "content/float-ball.js"
       ],
       "run_at": "document_start"
     }
