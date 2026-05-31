@@ -14,7 +14,7 @@ import json
 import pytest
 from unittest.mock import AsyncMock, MagicMock, patch
 
-from agent import QiuWenAgent, AgentState, _build_graph_real
+from agent_engine import QiuWenAgent, AgentState, _build_graph_real
 from langchain_core.messages import AIMessage, HumanMessage
 
 

@@ -206,7 +206,16 @@ class SearchDocsTool:
         bm25_results = _bm25_index.search(query, top_k=top_k)
 
         # Step 3: RRF 融合
-        merged = self._rrf_merge(vector_results, bm25_results, top_k)
+        merged = self._rrf_merge(vector_results, bm25_results, top_k * 2)  # 取更多候选
+
+        # Step 4: Reranker 精排（P1 优化）
+        try:
+            from utils.reranker import get_reranker
+            reranker = get_reranker()
+            if reranker._model:
+                merged = reranker.rerank(query, merged, top_k=top_k)
+        except Exception:
+            pass  # Reranker 不可用时降级
 
         logger.info(
             "文档检索完成",
@@ -217,7 +226,7 @@ class SearchDocsTool:
         )
 
         return json.dumps(
-            {"results": [{"text": r["text"], "score": round(r.get("score", 0), 4)} for r in merged]},
+            {"results": [{"text": r["text"], "score": round(r.get("score", 0), 4)} for r in merged[:top_k]]},
             ensure_ascii=False,
         )
 

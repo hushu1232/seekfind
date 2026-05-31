@@ -24,7 +24,7 @@ from fastapi import FastAPI, WebSocket, WebSocketDisconnect
 from fastapi.responses import JSONResponse
 
 from config import settings
-from agent import QiuWenAgent
+from agent_engine import QiuWenAgent
 from memory.short_term import ShortTermMemory
 from indexer.build_index import IndexBuilder
 from indexer.crawler import CrawledDoc

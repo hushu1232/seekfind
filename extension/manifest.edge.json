@@ -1,0 +1,51 @@
+{
+  "manifest_version": 3,
+  "name": "求问 — 本地智能网页引导球",
+  "version": "0.1.0",
+  "description": "本地 AI 驱动的网页操作引导助手，在侧边栏显示智能球体，帮你快速找到操作方法。",
+  "permissions": [
+    "sidePanel",
+    "activeTab",
+    "storage",
+    "tabs",
+    "webNavigation"
+  ],
+  "host_permissions": [
+    "<all_urls>"
+  ],
+  "action": {
+    "default_title": "求问",
+    "default_icon": {
+      "16": "icons/icon16.png",
+      "48": "icons/icon48.png",
+      "128": "icons/icon128.png"
+    }
+  },
+  "side_panel": {
+    "default_path": "sidebar/index.html"
+  },
+  "background": {
+    "service_worker": "service_worker.js",
+    "type": "module"
+  },
+  "content_scripts": [
+    {
+      "matches": ["<all_urls>"],
+      "js": [
+        "content/snapshot.js",
+        "content/observer.js",
+        "content/highlight.js",
+        "content/particle.js",
+        "content/privacy.js",
+        "content/screenshot.js",
+        "content/float-ball.js"
+      ],
+      "run_at": "document_start"
+    }
+  ],
+  "icons": {
+    "16": "icons/icon16.png",
+    "48": "icons/icon48.png",
+    "128": "icons/icon128.png"
+  }
+}

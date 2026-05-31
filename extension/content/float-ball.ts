@@ -177,8 +177,11 @@ export class FloatBall {
     particles.className = "qw-particles";
     this.ballEl.appendChild(particles);
 
-    // 创建 12 个粒子
-    for (let i = 0; i < 12; i++) {
+    // 自适应粒子数量（根据设备性能）
+    const particleCount = this.getOptimalParticleCount();
+    const angleStep = 360 / particleCount;
+    particles.style.setProperty("--angle-step", `${angleStep}deg`);
+    for (let i = 0; i < particleCount; i++) {
       const p = document.createElement("div");
       p.className = "qw-particle";
       p.style.setProperty("--i", String(i));
@@ -364,14 +367,14 @@ export class FloatBall {
 
       @keyframes particle-orbit {
         0% {
-          transform: rotate(calc(var(--i) * 30deg)) translateX(32px) scale(1);
+          transform: rotate(calc(var(--i) * var(--angle-step, 30deg))) translateX(32px) scale(1);
           opacity: 0.6;
         }
         50% {
           opacity: 1;
         }
         100% {
-          transform: rotate(calc(var(--i) * 30deg + 360deg)) translateX(32px) scale(0.5);
+          transform: rotate(calc(var(--i) * var(--angle-step, 30deg) + 360deg)) translateX(32px) scale(0.5);
           opacity: 0.3;
         }
       }
@@ -423,6 +426,9 @@ export class FloatBall {
       if (!this.isDragging) this.showTooltip();
     });
     wrapper.addEventListener("mouseleave", () => this.hideTooltip());
+
+    // 右键 / 长按快捷菜单
+    this.bindContextMenu(wrapper);
   }
 
   // -----------------------------------------------------------------------
@@ -604,18 +610,41 @@ export class FloatBall {
   }
 
   // -----------------------------------------------------------------------
-  // 动画（CSS 驱动，无需 requestAnimationFrame）
+  // 性能优化
+  // -----------------------------------------------------------------------
+
+  /** 根据设备性能自适应粒子数量。 */
+  private getOptimalParticleCount(): number {
+    const cores = navigator.hardwareConcurrency || 4;
+    const isMobile = /iPhone|iPad|Android/i.test(navigator.userAgent);
+
+    if (isMobile) return 6;
+    if (cores >= 8) return 16;
+    if (cores >= 4) return 12;
+    return 8;
+  }
+
+  // -----------------------------------------------------------------------
+  // 动画控制（CSS animation-play-state 暂停/恢复）
   // -----------------------------------------------------------------------
 
   private startAnimation(): void {
-    // CSS 动画自动运行，无需手动驱动
+    if (this.ballEl) {
+      this.ballEl.style.animationPlayState = "running";
+    }
+    // 粒子也恢复
+    this.shadowRoot?.querySelectorAll(".qw-particle").forEach((p) => {
+      (p as HTMLElement).style.animationPlayState = "running";
+    });
   }
 
   private stopAnimation(): void {
-    if (this.animationId) {
-      cancelAnimationFrame(this.animationId);
-      this.animationId = null;
+    if (this.ballEl) {
+      this.ballEl.style.animationPlayState = "paused";
     }
+    this.shadowRoot?.querySelectorAll(".qw-particle").forEach((p) => {
+      (p as HTMLElement).style.animationPlayState = "paused";
+    });
   }
 
   // -----------------------------------------------------------------------
@@ -635,21 +664,192 @@ export class FloatBall {
   }
 
   // -----------------------------------------------------------------------
-  // 新用户引导
+  // 新用户引导（分级提示）
   // -----------------------------------------------------------------------
+
+  private readonly GUIDE_MESSAGES = [
+    "👋 点击我向求问提问",
+    "📌 拖拽可移动我的位置",
+    "⌨️ 输入问题，我会帮你找到答案",
+  ];
 
   private async showGuideIfNeeded(): Promise<void> {
     const result = await safeStorageGet(["qiuwen_guide_count"]);
     this.guideDisplayCount = result.qiuwen_guide_count || 0;
 
-    if (this.guideDisplayCount < 3) {
+    if (this.guideDisplayCount < this.GUIDE_MESSAGES.length) {
+      const delay = this.guideDisplayCount === 0 ? 1000 : 2000;
       setTimeout(() => {
         if (!isAlive()) return;
+        const msg = this.GUIDE_MESSAGES[this.guideDisplayCount];
+        if (this.tooltipEl) {
+          this.tooltipEl.textContent = msg;
+        }
         this.showTooltip();
         this.guideDisplayCount++;
         safeStorageSet({ qiuwen_guide_count: this.guideDisplayCount });
-        this.guideTimer = setTimeout(() => this.hideTooltip(), 3000);
-      }, 1000);
+        this.guideTimer = setTimeout(() => this.hideTooltip(), 3500);
+      }, delay);
+    }
+  }
+
+  // -----------------------------------------------------------------------
+  // 快捷菜单（右键 / 长按）
+  // -----------------------------------------------------------------------
+
+  private quickMenuEl: HTMLDivElement | null = null;
+
+  private bindContextMenu(wrapper: HTMLElement): void {
+    // 右键菜单
+    wrapper.addEventListener("contextmenu", (e) => {
+      e.preventDefault();
+      e.stopPropagation();
+      this.showQuickMenu(e.clientX, e.clientY);
+    });
+
+    // 长按（触摸设备）
+    let longPressTimer: ReturnType<typeof setTimeout> | null = null;
+    wrapper.addEventListener("touchstart", (e) => {
+      longPressTimer = setTimeout(() => {
+        const touch = e.touches[0];
+        this.showQuickMenu(touch.clientX, touch.clientY);
+      }, 600);
+    }, { passive: true });
+
+    wrapper.addEventListener("touchend", () => {
+      if (longPressTimer) {
+        clearTimeout(longPressTimer);
+        longPressTimer = null;
+      }
+    });
+
+    wrapper.addEventListener("touchmove", () => {
+      if (longPressTimer) {
+        clearTimeout(longPressTimer);
+        longPressTimer = null;
+      }
+    });
+
+    // 点击其他地方关闭菜单
+    document.addEventListener("click", () => this.hideQuickMenu());
+  }
+
+  private showQuickMenu(x: number, y: number): void {
+    if (!this.shadowRoot) return;
+
+    // 移除旧菜单
+    this.hideQuickMenu();
+
+    const menu = document.createElement("div");
+    menu.className = "qw-quick-menu";
+
+    const items = [
+      { icon: "💬", label: "打开对话", action: "open_chat" },
+      { icon: "🎯", label: "回到原位", action: "reset_position" },
+      { icon: "👁️", label: "临时隐藏", action: "hide_ball" },
+      { icon: "⚙️", label: "设置", action: "settings" },
+    ];
+
+    items.forEach((item) => {
+      const btn = document.createElement("div");
+      btn.className = "qw-menu-item";
+      btn.innerHTML = `<span class="qw-menu-icon">${item.icon}</span><span class="qw-menu-label">${item.label}</span>`;
+      btn.addEventListener("click", (e) => {
+        e.stopPropagation();
+        this.handleQuickMenuAction(item.action);
+        this.hideQuickMenu();
+      });
+      menu.appendChild(btn);
+    });
+
+    // 定位（避免超出视口）
+    const menuWidth = 160;
+    const menuHeight = items.length * 40 + 8;
+    const finalX = Math.min(x, window.innerWidth - menuWidth - 10);
+    const finalY = Math.min(y, window.innerHeight - menuHeight - 10);
+
+    menu.style.cssText = `
+      position: fixed;
+      left: ${finalX}px;
+      top: ${finalY}px;
+      z-index: 2147483647;
+    `;
+
+    // 注入菜单样式
+    const menuStyle = document.createElement("style");
+    menuStyle.textContent = `
+      .qw-quick-menu {
+        background: rgba(30, 30, 30, 0.95);
+        border: 1px solid rgba(255,255,255,0.1);
+        border-radius: 10px;
+        padding: 4px;
+        backdrop-filter: blur(8px);
+        box-shadow: 0 4px 20px rgba(0,0,0,0.3);
+        animation: qw-menu-in 0.15s ease-out;
+      }
+      @keyframes qw-menu-in {
+        from { opacity: 0; transform: scale(0.9); }
+        to { opacity: 1; transform: scale(1); }
+      }
+      .qw-menu-item {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        padding: 8px 12px;
+        border-radius: 6px;
+        cursor: pointer;
+        color: #e0e0e0;
+        font-size: 13px;
+        font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", system-ui, sans-serif;
+        transition: background 0.15s;
+      }
+      .qw-menu-item:hover {
+        background: rgba(74, 144, 217, 0.3);
+        color: white;
+      }
+      .qw-menu-icon { font-size: 16px; }
+    `;
+
+    this.shadowRoot.appendChild(menuStyle);
+    this.shadowRoot.appendChild(menu);
+    this.quickMenuEl = menu;
+  }
+
+  private hideQuickMenu(): void {
+    if (this.quickMenuEl) {
+      this.quickMenuEl.remove();
+      this.quickMenuEl = null;
+    }
+  }
+
+  private handleQuickMenuAction(action: string): void {
+    switch (action) {
+      case "open_chat":
+        safeSend({ type: "FLOAT_BALL_CLICK" });
+        break;
+      case "reset_position":
+        this.currentX = DEFAULT_PREFS.position.x;
+        this.currentY = DEFAULT_PREFS.position.y;
+        if (this.container) {
+          this.container.style.transition = "left 0.3s ease, top 0.3s ease";
+          this.container.style.left = `${this.currentX}px`;
+          this.container.style.top = `${this.currentY}px`;
+          setTimeout(() => {
+            if (this.container) this.container.style.transition = "";
+          }, 300);
+        }
+        this.savePrefs();
+        break;
+      case "hide_ball":
+        this.hide();
+        // 10 分钟后自动恢复
+        setTimeout(() => {
+          if (isAlive()) this.show();
+        }, 10 * 60 * 1000);
+        break;
+      case "settings":
+        safeSend({ type: "FLOAT_BALL_CLICK" });
+        break;
     }
   }
 
@@ -686,15 +886,20 @@ export class FloatBall {
   // 销毁
   // -----------------------------------------------------------------------
 
+  /** 完全清理资源。 */
   dispose(): void {
     this.stopAnimation();
     if (this.guideTimer) {
       clearTimeout(this.guideTimer);
+      this.guideTimer = null;
     }
     if (this.container) {
       this.container.remove();
       this.container = null;
     }
+    this.shadowRoot = null;
+    this.ballEl = null;
+    this.tooltipEl = null;
   }
 }
 
