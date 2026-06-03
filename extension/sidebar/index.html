@@ -2,9 +2,17 @@
 <html lang="zh-CN">
 <head>
   <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <meta name="theme-color" content="#4A90D9">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="default">
+  <meta name="apple-mobile-web-app-title" content="求问">
   <title>求问</title>
   <link rel="stylesheet" href="./styles.css">
+  <link rel="stylesheet" href="./responsive.css">
+  <link rel="manifest" href="./manifest.json">
+  <link rel="icon" type="image/png" sizes="16x16" href="../icons/icon16.png">
+  <link rel="apple-touch-icon" href="../icons/icon128.png">
 </head>
 <body>
   <div class="header">
@@ -31,5 +39,19 @@
   </div>
 
   <script type="module" src="./panel.ts"></script>
+  <script>
+    // 注册 Service Worker (PWA)
+    if ('serviceWorker' in navigator) {
+      window.addEventListener('load', () => {
+        navigator.serviceWorker.register('./sw.js')
+          .then((registration) => {
+            console.log('[求问] Service Worker 注册成功');
+          })
+          .catch((error) => {
+            console.log('[求问] Service Worker 注册失败:', error);
+          });
+      });
+    }
+  </script>
 </body>
 </html>

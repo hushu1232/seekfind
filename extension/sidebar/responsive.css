@@ -1,0 +1,221 @@
+/*
+ * 求问 — 响应式样式
+ * =================
+ *
+ * 支持设备：
+ *   - 桌面 (>1024px)
+ *   - 平板 (768px-1024px)
+ *   - 手机 (<768px)
+ */
+
+/* 手机端样式 */
+@media (max-width: 768px) {
+  /* 侧边栏全屏 */
+  body {
+    width: 100% !important;
+    height: 100% !important;
+    position: fixed !important;
+    top: 0 !important;
+    left: 0 !important;
+  }
+
+  /* 头部 */
+  .header {
+    padding: 10px 12px;
+  }
+
+  .header h1 {
+    font-size: 14px;
+  }
+
+  /* 球体区域 */
+  #ball-container {
+    height: 150px;
+  }
+
+  /* 消息区域 */
+  .messages {
+    padding: 12px;
+    gap: 10px;
+  }
+
+  .message {
+    max-width: 90%;
+    padding: 8px 12px;
+    font-size: 13px;
+  }
+
+  /* 输入区域 */
+  .input-area {
+    padding: 10px 12px;
+    flex-wrap: wrap;
+    gap: 6px;
+  }
+
+  .input-area input {
+    flex: 1;
+    min-width: 0;
+    padding: 8px 12px;
+    font-size: 13px;
+  }
+
+  .input-area button {
+    padding: 8px 12px;
+    font-size: 13px;
+  }
+
+  /* 步骤卡片 */
+  .step-card {
+    padding: 10px;
+    margin-top: 6px;
+  }
+
+  .step-card .step-header {
+    font-size: 12px;
+  }
+
+  .step-card .step-desc {
+    font-size: 13px;
+  }
+
+  /* 反馈按钮 */
+  .step-card .feedback-btns button {
+    padding: 8px;
+    font-size: 12px;
+  }
+
+  /* 录制按钮 */
+  .record-btn {
+    padding: 8px 10px;
+    font-size: 13px;
+  }
+
+  /* 诊断弹窗 */
+  .diagnostic-modal-content {
+    width: 95%;
+    padding: 16px;
+    max-height: 90vh;
+  }
+
+  /* 欢迎界面 */
+  .welcome-container {
+    padding: 16px;
+  }
+
+  .welcome-title {
+    font-size: 18px;
+  }
+
+  .welcome-subtitle {
+    font-size: 13px;
+  }
+
+  .welcome-option-card {
+    padding: 12px;
+  }
+
+  .option-title {
+    font-size: 14px;
+  }
+
+  .option-desc {
+    font-size: 12px;
+  }
+}
+
+/* 平板端样式 */
+@media (min-width: 769px) and (max-width: 1024px) {
+  /* 消息区域 */
+  .messages {
+    padding: 14px;
+  }
+
+  .message {
+    max-width: 85%;
+    font-size: 14px;
+  }
+
+  /* 输入区域 */
+  .input-area {
+    padding: 12px 14px;
+  }
+}
+
+/* 触摸设备优化 */
+@media (hover: none) and (pointer: coarse) {
+  /* 增大点击区域 */
+  .step-card .feedback-btns button {
+    min-height: 44px;
+    min-width: 44px;
+  }
+
+  .input-area button {
+    min-height: 44px;
+  }
+
+  .record-btn {
+    min-height: 44px;
+  }
+
+  /* 禁用 hover 效果 */
+  .step-card .feedback-btns button:hover {
+    background: var(--bg-white);
+  }
+
+  .input-area button:hover {
+    background: var(--primary);
+  }
+}
+
+/* 深色模式支持 */
+@media (prefers-color-scheme: dark) {
+  :root {
+    --bg: #1a1a2e;
+    --bg-white: #16213e;
+    --text: #eaeaea;
+    --text-secondary: #a0a0a0;
+    --border: #2a2a4a;
+  }
+
+  .message.assistant {
+    background: var(--bg-white);
+    border-color: var(--border);
+  }
+
+  .step-card {
+    background: var(--bg-white);
+    border-color: var(--border);
+  }
+
+  .input-area input {
+    background: var(--bg-white);
+    color: var(--text);
+    border-color: var(--border);
+  }
+
+  .input-area input::placeholder {
+    color: var(--text-secondary);
+  }
+}
+
+/* 安全区域适配（刘海屏） */
+@supports (padding-top: env(safe-area-inset-top)) {
+  .header {
+    padding-top: calc(10px + env(safe-area-inset-top));
+  }
+
+  .input-area {
+    padding-bottom: calc(10px + env(safe-area-inset-bottom));
+  }
+}
+
+/* 横屏模式 */
+@media (orientation: landscape) and (max-height: 500px) {
+  #ball-container {
+    height: 100px;
+  }
+
+  .messages {
+    flex: 1;
+  }
+}
