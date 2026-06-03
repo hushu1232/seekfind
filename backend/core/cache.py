@@ -7,6 +7,7 @@
   2. Redis 分布式缓存（L2）
   3. 缓存失效和更新
   4. 缓存统计
+  5. 缓存预热
 
 缓存策略：
   - 查询缓存：相同查询直接返回缓存结果
@@ -23,6 +24,16 @@ from typing import Any
 import structlog
 
 logger = structlog.get_logger()
+
+
+# ---------------------------------------------------------------------------
+# 缓存指标（集成 Prometheus）
+# ---------------------------------------------------------------------------
+try:
+    from core.metrics import record_cache_hit, record_cache_miss
+    METRICS_AVAILABLE = True
+except ImportError:
+    METRICS_AVAILABLE = False
 
 
 class LRUCache:
@@ -122,6 +133,8 @@ class CacheManager:
         # L1 缓存
         value = self._l1.get(key)
         if value is not None:
+            if METRICS_AVAILABLE:
+                record_cache_hit("l1")
             return value
 
         # L2 缓存
@@ -132,10 +145,14 @@ class CacheManager:
                     value = json.loads(data)
                     # 写入 L1
                     self._l1.set(key, value, self._l1_ttl)
+                    if METRICS_AVAILABLE:
+                        record_cache_hit("l2")
                     return value
             except Exception as e:
                 logger.debug("Redis 获取失败", key=key, error=str(e))
 
+        if METRICS_AVAILABLE:
+            record_cache_miss("all")
         return None
 
     async def set(self, key: str, value: Any, ttl: int | None = None):
@@ -205,10 +222,33 @@ class CacheManager:
 
     def stats(self) -> dict:
         """获取缓存统计"""
+        l1_stats = self._l1.stats()
         return {
-            "l1": self._l1.stats(),
+            "l1": l1_stats,
             "l2_available": self._redis is not None,
+            "hit_rate": l1_stats["hit_rate"],
         }
+
+    async def warmup(self, queries: list[str], fetch_func):
+        """
+        缓存预热
+
+        Args:
+            queries: 需要预热的查询列表
+            fetch_func: 获取数据的异步函数
+        """
+        warmed = 0
+        for query in queries:
+            cache_key = self._generate_key("search", {"query": query})
+            if not self._l1.get(cache_key):
+                try:
+                    value = await fetch_func(query)
+                    await self.set(cache_key, value)
+                    warmed += 1
+                except Exception as e:
+                    logger.debug("缓存预热失败", query=query, error=str(e))
+
+        logger.info("缓存预热完成", total=len(queries), warmed=warmed)
 
 
 # ---------------------------------------------------------------------------

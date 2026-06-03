@@ -9,6 +9,7 @@
   POST /api/index/url       从 URL 爬取并构建索引
   POST /api/index/text      从文本构建索引
   GET  /api/index/status    索引状态
+  GET  /metrics             Prometheus 指标
   WS   /ws/chat             WebSocket 聊天通道
 
 消息验证：
@@ -16,6 +17,7 @@
 """
 
 import json
+import time
 import uuid
 from contextlib import asynccontextmanager
 
@@ -23,8 +25,8 @@ import structlog
 from agent_engine import QiuWenAgent
 from browser.controller import browser_controller
 from config import settings
-from fastapi import FastAPI, WebSocket, WebSocketDisconnect
-from fastapi.responses import JSONResponse
+from fastapi import FastAPI, Request, WebSocket, WebSocketDisconnect
+from fastapi.responses import JSONResponse, Response
 from indexer.build_index import IndexBuilder
 from indexer.crawler import CrawledDoc
 from memory.short_term import ShortTermMemory
@@ -66,11 +68,44 @@ app = FastAPI(
 
 
 # ---------------------------------------------------------------------------
-# 健康检查
+# Prometheus 指标中间件
+# ---------------------------------------------------------------------------
+@app.middleware("http")
+async def metrics_middleware(request: Request, call_next):
+    """记录 HTTP 请求指标"""
+    from core.metrics import record_http_request
+
+    start_time = time.time()
+    response = await call_next(request)
+    duration = time.time() - start_time
+
+    # 记录指标
+    record_http_request(
+        method=request.method,
+        endpoint=request.url.path,
+        status=response.status_code,
+        duration=duration,
+    )
+
+    return response
+
+
+# ---------------------------------------------------------------------------
+# 健康检查 + Prometheus 指标
 # ---------------------------------------------------------------------------
 @app.get("/health")
 async def health():
     return {"status": "ok", "model_strategy": settings.model_strategy.value}
+
+
+@app.get("/metrics")
+async def metrics():
+    """Prometheus 指标端点"""
+    from core.metrics import get_metrics_content, get_metrics_content_type
+    return Response(
+        content=get_metrics_content(),
+        media_type=get_metrics_content_type(),
+    )
 
 
 @app.get("/api/status")
