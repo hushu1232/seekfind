@@ -41,6 +41,10 @@ from schemas import (
     UserMessage,
 )
 
+# 配置日志
+from core.logging_config import setup_logging
+setup_logging(log_level=settings.log_level, json_format=True)
+
 logger = structlog.get_logger()
 
 active_sessions: dict[str, ShortTermMemory] = {}
