@@ -388,7 +388,7 @@ class QiuWenAgent:
                 return "doc_question"
 
     # -----------------------------------------------------------------------
-    # 流式回复（主入口）
+    # 流式回复（主入口）- P1: 并行执行优化
     # -----------------------------------------------------------------------
     async def stream_reply(
         self, text: str, session: ShortTermMemory, page_context: dict[str, Any] | None = None,
@@ -411,20 +411,33 @@ class QiuWenAgent:
 
             yield {"type": "agent_thinking", "text": "正在思考..."}
 
-            intent = await self.classify_intent(text)
-            yield {"type": "intent_classified", "intent": intent}
-            span.attributes["intent"] = intent
-
+            # P1: 并行执行意图分类 + 查询改写 + 上下文检索
             page_info = ""
             if page_context:
                 page_info = f"\n当前页面：{page_context.get('url', '')} ({page_context.get('page_type', 'unknown')})"
 
+            # 并行执行三个任务
+            intent_task = asyncio.create_task(self.classify_intent(text))
+            context_task = asyncio.create_task(self._retrieve_context(text, session))
+
+            # 等待意图分类完成（必须先完成，决定后续路由）
+            intent = await intent_task
+            yield {"type": "intent_classified", "intent": intent}
+            span.attributes["intent"] = intent
+
+            # 等待上下文检索完成
+            context = await context_task
+
+            # 记录并行执行效果
+            parallel_time = time.time() - start_time
+            self._metrics.observe("agent.parallel.preparation", parallel_time)
+
             try:
                 if intent == "guide_request":
-                    async for chunk in self._run_graph(self._guide_graph, SYSTEM_PROMPTS["guide"], text, session, page_info):
+                    async for chunk in self._run_graph(self._guide_graph, SYSTEM_PROMPTS["guide"], text, session, page_info, context):
                         yield chunk
                 elif intent == "doc_question":
-                    async for chunk in self._run_graph(self._rag_graph, SYSTEM_PROMPTS["doc"], text, session, page_info):
+                    async for chunk in self._run_graph(self._rag_graph, SYSTEM_PROMPTS["doc"], text, session, page_info, context):
                         yield chunk
                 else:
                     async for chunk in self._run_chat(text, session):
@@ -451,11 +464,13 @@ class QiuWenAgent:
     async def _run_graph(
         self, graph, system_prompt: str, text: str,
         session: ShortTermMemory, page_info: str,
+        context: str = None,
     ) -> AsyncGenerator[dict, None]:
-        """执行 LangGraph 子图（RAG / 引导通用）。V10: 超时控制。P2: tracing。"""
+        """执行 LangGraph 子图（RAG / 引导通用）。V10: 超时控制。P2: tracing。P1: 并行优化。"""
         async with trace_span("agent.run_graph", prompt=text[:50]) as span:
-            # T2.2 + T2.3: 查询改写 + 上下文感知检索
-            context = await self._retrieve_context(text, session)
+            # P1: 如果没有预检索的上下文，则检索
+            if context is None:
+                context = await self._retrieve_context(text, session)
             span.set_attribute("context_length", len(context))
 
             # T1.1: 注入回复格式约束
@@ -575,24 +590,33 @@ class QiuWenAgent:
         return query
 
     # -----------------------------------------------------------------------
-    # 辅助
+    # 辅助 - P1: 并行执行优化
     # -----------------------------------------------------------------------
     async def _retrieve_context(self, query: str, session: ShortTermMemory | None = None) -> str:
-        """检索文档上下文 + 用户画像 + 相似案例。支持查询改写和上下文感知。"""
+        """检索文档上下文 + 用户画像 + 相似案例。P1: 并行执行优化。"""
         context_parts = []
 
         # 上下文感知查询（T2.3）
         enhanced_query = self._build_contextual_query(query, session) if session else query
 
-        # 查询改写 + 多路检索（T2.2）
-        queries = await self._rewrite_query(enhanced_query)
+        # P1: 并行执行查询改写和用户画像检索
+        rewrite_task = asyncio.create_task(self._rewrite_query(enhanced_query))
+        profile_task = asyncio.create_task(self._get_user_profile(query))
 
-        # 文档检索（多路合并）
+        # 等待查询改写完成
+        queries = await rewrite_task
+
+        # P1: 并行执行多路检索
         if self._long_term:
+            # 并行执行向量检索和 BM25 检索
+            search_tasks = [self._long_term.search(q, collection="docs", top_k=3) for q in queries]
+            search_results = await asyncio.gather(*search_tasks, return_exceptions=True)
+
+            # 合并结果
             all_docs = []
-            for q in queries:
-                docs = await self._long_term.search(q, collection="docs", top_k=3)
-                all_docs.extend(docs)
+            for result in search_results:
+                if isinstance(result, list):
+                    all_docs.extend(result)
 
             # 去重
             seen = set()
@@ -606,20 +630,31 @@ class QiuWenAgent:
             if unique_docs:
                 context_parts.append("参考文档：\n" + "\n---\n".join(d.get("text", "") for d in unique_docs[:5]))
 
-        # 用户画像注入
-        if self._persistent_memory:
-            profile = self._persistent_memory.get_profile()
-            if profile and profile.products:
-                profile_text = f"用户画像：常用产品={','.join(profile.products)}，水平={profile.skill_level}"
-                context_parts.append(profile_text)
-
-            # 查找相似成功案例
-            case = self._persistent_memory.find_case(query)
-            if case:
-                case_text = f"相似成功案例：{case.question_pattern}\n步骤：{json.dumps(case.steps, ensure_ascii=False)}"
-                context_parts.append(case_text)
+        # 等待用户画像检索完成
+        profile_context = await profile_task
+        if profile_context:
+            context_parts.append(profile_context)
 
         return "\n\n".join(context_parts) if context_parts else "（本地文档索引为空）"
+
+    async def _get_user_profile(self, query: str) -> str:
+        """获取用户画像和相似案例"""
+        if not self._persistent_memory:
+            return ""
+
+        parts = []
+
+        # 用户画像
+        profile = self._persistent_memory.get_profile()
+        if profile and profile.products:
+            parts.append(f"用户画像：常用产品={','.join(profile.products)}，水平={profile.skill_level}")
+
+        # 相似成功案例
+        case = self._persistent_memory.find_case(query)
+        if case:
+            parts.append(f"相似成功案例：{case.question_pattern}\n步骤：{json.dumps(case.steps, ensure_ascii=False)}")
+
+        return "\n\n".join(parts)
 
     async def analyze_page_event(self, event: dict) -> dict | None:
         event_type = event.get("event_type", "")
