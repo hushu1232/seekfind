@@ -7,7 +7,6 @@
 
 import asyncio
 import json
-from typing import Any
 
 import structlog
 
@@ -44,7 +43,7 @@ class RAGWorker:
             data = json.loads(result)
             return {"success": True, "results": data.get("results", [])}
 
-        except asyncio.TimeoutError:
+        except TimeoutError:
             logger.warning("RAG Worker 超时", query=query[:50])
             return {"success": False, "error": "检索超时"}
         except Exception as e:

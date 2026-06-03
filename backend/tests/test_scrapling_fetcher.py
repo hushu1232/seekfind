@@ -10,11 +10,11 @@
   - 内容截断
 """
 
-import pytest
 from unittest.mock import AsyncMock, MagicMock, patch
 
-from indexer.scrapling_fetcher import ScraplingFetcher
+import pytest
 from indexer.crawler import CrawledDoc
+from indexer.scrapling_fetcher import ScraplingFetcher
 
 
 class TestScraplingFetcherInit:
@@ -121,9 +121,9 @@ class TestScraplingFetcherHelpers:
         links = fetcher.extract_links(html, "example.com")
         # 只保留同域 http/https 链接
         assert len(links) >= 1
-        assert not any("javascript:" in l for l in links)
-        assert not any("mailto:" in l for l in links)
-        assert not any("other.com" in l for l in links)
+        assert not any("javascript:" in link for link in links)
+        assert not any("mailto:" in link for link in links)
+        assert not any("other.com" in link for link in links)
 
     def test_extract_links_limit(self):
         """每页最多 50 个链接。"""

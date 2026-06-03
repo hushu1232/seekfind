@@ -7,7 +7,6 @@
 
 import asyncio
 import json
-from typing import Any
 
 import structlog
 
@@ -54,7 +53,7 @@ class HighlightWorker:
 
             return {"success": True, "highlight": data}
 
-        except asyncio.TimeoutError:
+        except TimeoutError:
             logger.warning("Highlight Worker 超时", selector=selector)
             return {"success": False, "error": "高亮超时"}
         except Exception as e:

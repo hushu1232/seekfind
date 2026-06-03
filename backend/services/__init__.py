@@ -10,8 +10,8 @@
   - retrieval_service: 检索服务
 """
 
-from .base import BaseService, ServiceStatus
 from .agent_service import AgentService
+from .base import BaseService, ServiceStatus
 from .retrieval_service import RetrievalService
 
 __all__ = [

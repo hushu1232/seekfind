@@ -7,7 +7,6 @@
 """
 
 import re
-import pytest
 
 
 def sanitize_email(text: str) -> str:

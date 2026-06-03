@@ -13,15 +13,13 @@
 """
 
 import json
-import pytest
 
+import pytest
 from tools import get_all_tools, get_tool_by_name, get_tool_schemas
-from tools.search_docs import SearchDocsTool
-from tools.fetch_doc_page import FetchDocPageTool
-from tools.highlight_element import HighlightElementTool
+from tools.browser_tools import BrowserFindTool, BrowserInteractTool, BrowserSnapshotTool
 from tools.classify_page import ClassifyPageTool
-from tools.browser_tools import BrowserSnapshotTool, BrowserInteractTool, BrowserFindTool
-from memory.fingerprint_storage import FingerprintStorage
+from tools.highlight_element import HighlightElementTool
+from tools.search_docs import SearchDocsTool
 
 
 class TestKnowledgeBaseSearch:

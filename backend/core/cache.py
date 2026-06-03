@@ -17,9 +17,8 @@
 import hashlib
 import json
 import time
-from typing import Optional, Any
-from datetime import datetime, timedelta
 from collections import OrderedDict
+from typing import Any
 
 import structlog
 
@@ -39,7 +38,7 @@ class LRUCache:
         self._hits = 0
         self._misses = 0
 
-    def get(self, key: str) -> Optional[Any]:
+    def get(self, key: str) -> Any | None:
         """获取缓存"""
         if key in self._cache:
             value, expire_at = self._cache[key]
@@ -114,7 +113,7 @@ class CacheManager:
         hash_value = hashlib.md5(sorted_params.encode()).hexdigest()
         return f"{prefix}:{hash_value}"
 
-    async def get(self, key: str) -> Optional[Any]:
+    async def get(self, key: str) -> Any | None:
         """
         获取缓存
 
@@ -139,7 +138,7 @@ class CacheManager:
 
         return None
 
-    async def set(self, key: str, value: Any, ttl: Optional[int] = None):
+    async def set(self, key: str, value: Any, ttl: int | None = None):
         """
         设置缓存
 
@@ -179,7 +178,7 @@ class CacheManager:
         """
         # L1 缓存（简单遍历）
         keys_to_delete = [
-            k for k in self._l1._cache.keys()
+            k for k in self._l1._cache
             if k.startswith(pattern.rstrip("*"))
         ]
         for k in keys_to_delete:
@@ -215,7 +214,7 @@ class CacheManager:
 # ---------------------------------------------------------------------------
 # 全局单例
 # ---------------------------------------------------------------------------
-_cache_manager: Optional[CacheManager] = None
+_cache_manager: CacheManager | None = None
 
 
 def get_cache_manager() -> CacheManager:

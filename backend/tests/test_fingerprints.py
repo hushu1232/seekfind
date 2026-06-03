@@ -8,8 +8,6 @@
   - UA 多样性
 """
 
-import pytest
-from unittest.mock import patch, MagicMock
 
 from indexer.fingerprints import generate_stealth_headers, get_random_user_agent
 

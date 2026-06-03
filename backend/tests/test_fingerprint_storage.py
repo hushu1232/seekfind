@@ -13,8 +13,8 @@
 """
 
 import time
-import pytest
 
+import pytest
 from memory.fingerprint_storage import FingerprintStorage
 
 

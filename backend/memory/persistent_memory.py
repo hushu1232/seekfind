@@ -23,7 +23,7 @@ from pathlib import Path
 
 import structlog
 
-from memory.types import MemoryType, MemoryRecord, UserProfile, AgentCase
+from memory.types import AgentCase, MemoryRecord, MemoryType, UserProfile
 
 logger = structlog.get_logger()
 

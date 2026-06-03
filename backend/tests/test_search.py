@@ -9,9 +9,10 @@
 """
 
 import json
-import pytest
+
 import jieba
-from tools.search_docs import SearchDocsTool, BM25Index, _bm25_index
+import pytest
+from tools.search_docs import BM25Index, SearchDocsTool
 
 
 class TestRRFMerge:

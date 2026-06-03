@@ -142,10 +142,10 @@ class ScreenshotAnnotateTool:
                 # 尝试加载字体（系统字体，失败则用默认）
                 try:
                     font = ImageFont.truetype("msyh.ttc", 16)  # 微软雅黑
-                except (OSError, IOError):
+                except OSError:
                     try:
                         font = ImageFont.truetype("arial.ttf", 16)
-                    except (OSError, IOError):
+                    except OSError:
                         font = ImageFont.load_default()
 
                 # 计算文字大小

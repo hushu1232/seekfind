@@ -126,7 +126,8 @@ class LearnFlowTool:
         if not self._current_steps or not self._current_flow_name:
             return
         # 保存到本地临时文件（不依赖 Chroma）
-        import tempfile, os
+        import os
+        import tempfile
         try:
             cache_dir = os.path.join(tempfile.gettempdir(), "qiuwen_flows")
             os.makedirs(cache_dir, exist_ok=True)

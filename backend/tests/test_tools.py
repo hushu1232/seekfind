@@ -9,15 +9,15 @@
 """
 
 import json
-import pytest
 
-from tools.search_docs import SearchDocsTool
-from tools.fetch_doc_page import FetchDocPageTool
-from tools.memory_tools import SaveMemoryTool, RecallMemoryTool
-from tools.highlight_element import HighlightElementTool
-from tools.classify_page import ClassifyPageTool
-from tools.learn_flow import LearnFlowTool
+import pytest
 from tools import get_all_tools, get_tool_by_name, get_tool_schemas
+from tools.classify_page import ClassifyPageTool
+from tools.fetch_doc_page import FetchDocPageTool
+from tools.highlight_element import HighlightElementTool
+from tools.learn_flow import LearnFlowTool
+from tools.memory_tools import RecallMemoryTool, SaveMemoryTool
+from tools.search_docs import SearchDocsTool
 
 
 class TestSearchDocsTool:

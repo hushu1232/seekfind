@@ -81,7 +81,7 @@ class Reranker:
             return documents[:top_k]
 
         # 按分数排序
-        scored_docs = list(zip(documents, scores))
+        scored_docs = list(zip(documents, scores, strict=False))
         scored_docs.sort(key=lambda x: x[1], reverse=True)
 
         return [doc for doc, _ in scored_docs[:top_k]]

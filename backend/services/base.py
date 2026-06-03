@@ -5,18 +5,17 @@
 所有服务的基类，定义统一的生命周期和健康检查接口。
 """
 
-import asyncio
 from abc import ABC, abstractmethod
-from enum import Enum
-from typing import Optional, Any
 from datetime import datetime
+from enum import StrEnum
+from typing import Any
 
 import structlog
 
 logger = structlog.get_logger()
 
 
-class ServiceStatus(str, Enum):
+class ServiceStatus(StrEnum):
     """服务状态"""
     INITIALIZING = "initializing"
     RUNNING = "running"
@@ -38,8 +37,8 @@ class BaseService(ABC):
     def __init__(self, name: str):
         self._name = name
         self._status = ServiceStatus.STOPPED
-        self._started_at: Optional[datetime] = None
-        self._error: Optional[str] = None
+        self._started_at: datetime | None = None
+        self._error: str | None = None
 
     @property
     def name(self) -> str:
@@ -57,7 +56,7 @@ class BaseService(ABC):
         return self._status == ServiceStatus.RUNNING
 
     @property
-    def uptime(self) -> Optional[float]:
+    def uptime(self) -> float | None:
         """运行时间（秒）"""
         if self._started_at and self._status == ServiceStatus.RUNNING:
             return (datetime.now() - self._started_at).total_seconds()

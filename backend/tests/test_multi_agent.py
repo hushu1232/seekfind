@@ -11,13 +11,12 @@
 
 import asyncio
 import json
-import pytest
-from unittest.mock import AsyncMock, MagicMock, patch
+from unittest.mock import AsyncMock, MagicMock
 
-from agent.state import AgentState, TaskStep
+import pytest
+from agent.graph import aggregate_node, build_multi_agent_graph, supervisor_node
 from agent.supervisor import Supervisor
-from agent.workers import RAGWorker, VisionWorker, FlowWorker, HighlightWorker
-from agent.graph import build_multi_agent_graph, supervisor_node, worker_dispatch_node, aggregate_node
+from agent.workers import FlowWorker, HighlightWorker, RAGWorker, VisionWorker
 
 
 class TestSupervisor:

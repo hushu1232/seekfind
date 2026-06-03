@@ -8,7 +8,6 @@
 
 import asyncio
 import json
-from typing import Any
 
 import structlog
 
@@ -56,7 +55,7 @@ class VisionWorker:
 
             return {"success": True, "location": data}
 
-        except asyncio.TimeoutError:
+        except TimeoutError:
             logger.warning("Vision Worker 超时", target=target)
             return {"success": False, "error": "视觉定位超时"}
         except Exception as e:

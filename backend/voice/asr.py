@@ -21,15 +21,14 @@
 """
 
 import json
-import struct
-from enum import Enum
+from enum import StrEnum
 
 import structlog
 
 logger = structlog.get_logger()
 
 
-class ASRState(str, Enum):
+class ASRState(StrEnum):
     """ASR 状态。"""
     IDLE = "idle"           # 空闲
     LISTENING = "listening"  # 监听唤醒词
@@ -57,7 +56,7 @@ class ASRService:
         如果模型不存在，ASR 功能降级（返回空文本）。
         """
         try:
-            from vosk import Model, KaldiRecognizer
+            from vosk import KaldiRecognizer, Model
 
             model_path = "models/vosk-model-small-cn-0.22"
             self._model = Model(model_path)

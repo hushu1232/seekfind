@@ -9,9 +9,10 @@
   4. 错误处理
 """
 
-import pytest
 import asyncio
-from httpx import AsyncClient, ASGITransport
+
+import pytest
+from httpx import ASGITransport, AsyncClient
 
 # 跳过如果依赖不可用
 pytest.importorskip("httpx")
@@ -114,11 +115,11 @@ async def test_concurrent_health_checks(client):
 @pytest.mark.asyncio
 async def test_websocket_connect():
     """测试 WebSocket 连接"""
-    from fastapi.testclient import TestClient
     from app import app
+    from fastapi.testclient import TestClient
 
     # TestClient 不支持异步 WebSocket 测试
     # 这里只测试端点存在
-    client = TestClient(app)
+    TestClient(app)
     # WebSocket 测试需要特殊处理
     pass

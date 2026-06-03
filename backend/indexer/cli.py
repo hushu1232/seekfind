@@ -8,15 +8,16 @@
 
 import argparse
 import asyncio
-import sys
 import os
+import sys
 
 # 确保 backend 目录在 Python 路径中
 sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
+from memory.long_term import LongTermMemory
+
 from indexer.build_index import IndexBuilder
 from indexer.crawler import CrawledDoc
-from memory.long_term import LongTermMemory
 
 
 async def main():

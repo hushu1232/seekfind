@@ -10,13 +10,12 @@
 """
 
 import asyncio
-from typing import Optional, Any
 
 import structlog
-
-from .base import BaseService, ServiceStatus
 from core.cache import get_cache_manager
 from core.observability import get_metrics, get_tracer
+
+from .base import BaseService
 
 logger = structlog.get_logger()
 
@@ -236,7 +235,7 @@ class RetrievalService(BaseService):
     async def add_document(
         self,
         text: str,
-        metadata: Optional[dict] = None,
+        metadata: dict | None = None,
         collection: str = "docs",
     ) -> str:
         """

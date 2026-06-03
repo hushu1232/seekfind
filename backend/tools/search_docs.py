@@ -25,7 +25,7 @@
 """
 
 import json
-from dataclasses import dataclass, field
+from dataclasses import dataclass
 
 import jieba
 import structlog

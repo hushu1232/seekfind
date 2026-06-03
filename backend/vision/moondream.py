@@ -26,7 +26,6 @@
 import base64
 import io
 import json
-from pathlib import Path
 
 import structlog
 from PIL import Image, ImageDraw, ImageFont
@@ -172,10 +171,7 @@ class MoondreamVision:
                 data = json.loads(text[json_start:json_end])
                 # 计算置信度（基于返回值是否全为 0）
                 x, y, w, h = data.get("x", 0), data.get("y", 0), data.get("w", 0), data.get("h", 0)
-                if x == 0 and y == 0 and w == 0 and h == 0:
-                    confidence = 0.0
-                else:
-                    confidence = 0.8  # 默认置信度
+                confidence = 0.0 if x == 0 and y == 0 and w == 0 and h == 0 else 0.8
                 return {"x": x, "y": y, "w": w, "h": h, "confidence": confidence}
         except (json.JSONDecodeError, KeyError):
             pass
@@ -236,7 +232,7 @@ class MoondreamVision:
             if text:
                 try:
                     font = ImageFont.truetype("msyh.ttc", 16)
-                except (OSError, IOError):
+                except OSError:
                     font = ImageFont.load_default()
 
                 bbox = draw.textbbox((0, 0), text, font=font)

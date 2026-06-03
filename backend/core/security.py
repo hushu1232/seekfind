@@ -15,7 +15,6 @@
 """
 
 import re
-from typing import Optional
 from dataclasses import dataclass
 
 import structlog
@@ -27,9 +26,9 @@ logger = structlog.get_logger()
 class SecurityCheckResult:
     """安全检查结果"""
     is_safe: bool
-    reason: Optional[str] = None
+    reason: str | None = None
     risk_level: str = "low"  # low, medium, high, critical
-    details: Optional[dict] = None
+    details: dict | None = None
 
 
 class SecurityGuard:
@@ -244,7 +243,7 @@ class SecurityGuard:
 # ---------------------------------------------------------------------------
 # 全局单例
 # ---------------------------------------------------------------------------
-_security_guard: Optional[SecurityGuard] = None
+_security_guard: SecurityGuard | None = None
 
 
 def get_security_guard() -> SecurityGuard:

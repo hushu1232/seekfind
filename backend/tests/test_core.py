@@ -9,10 +9,8 @@
   - observability: 可观测性
 """
 
-import pytest
-import asyncio
-import time
 
+import pytest
 
 # ---------------------------------------------------------------------------
 # 功能降级管理器测试
@@ -23,7 +21,7 @@ class TestFeatureDegradation:
 
     def test_register_feature(self):
         """测试注册功能"""
-        from core.degradation import FeatureDegradationManager, FeatureConfig
+        from core.degradation import FeatureConfig, FeatureDegradationManager
 
         manager = FeatureDegradationManager()
         config = FeatureConfig(
@@ -37,7 +35,7 @@ class TestFeatureDegradation:
 
     def test_degrade_feature(self):
         """测试功能降级"""
-        from core.degradation import FeatureDegradationManager, FeatureConfig, FeatureStatus
+        from core.degradation import FeatureConfig, FeatureDegradationManager, FeatureStatus
 
         manager = FeatureDegradationManager()
         config = FeatureConfig(
@@ -54,7 +52,7 @@ class TestFeatureDegradation:
 
     def test_get_all_status(self):
         """测试获取所有状态"""
-        from core.degradation import FeatureDegradationManager, FeatureConfig
+        from core.degradation import FeatureConfig, FeatureDegradationManager
 
         manager = FeatureDegradationManager()
         manager.register_feature(FeatureConfig(name="f1", display_name="F1", auto_retry=False))
@@ -66,7 +64,7 @@ class TestFeatureDegradation:
 
     def test_get_events(self):
         """测试获取事件"""
-        from core.degradation import FeatureDegradationManager, FeatureConfig
+        from core.degradation import FeatureConfig, FeatureDegradationManager
 
         manager = FeatureDegradationManager()
         config = FeatureConfig(name="test", display_name="Test", auto_retry=False)
@@ -80,7 +78,7 @@ class TestFeatureDegradation:
 
     def test_reset_feature(self):
         """测试重置功能"""
-        from core.degradation import FeatureDegradationManager, FeatureConfig
+        from core.degradation import FeatureConfig, FeatureDegradationManager
 
         manager = FeatureDegradationManager()
         config = FeatureConfig(name="test", display_name="Test", auto_retry=False)
@@ -341,9 +339,8 @@ class TestObservability:
 
         tracer = Tracer()
 
-        with tracer.start_span("outer") as outer:
-            with tracer.start_span("inner") as inner:
-                pass
+        with tracer.start_span("outer"), tracer.start_span("inner"):
+            pass
 
         spans = tracer.get_spans()
         assert len(spans) == 2

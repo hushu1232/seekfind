@@ -30,7 +30,6 @@
   }
 """
 
-import asyncio
 import json
 import sys
 from pathlib import Path
@@ -67,8 +66,8 @@ def create_server():
             query: 搜索查询文本，应包含核心关键词
             top_k: 返回结果数量，默认 5
         """
-        from tools.search_docs import SearchDocsTool
         from memory.long_term import LongTermMemory
+        from tools.search_docs import SearchDocsTool
 
         tool = SearchDocsTool()
         memory = LongTermMemory()
@@ -118,8 +117,8 @@ def create_server():
             description: 对这个元素的描述（如 '创建项目按钮'）
             page_url: 当前页面 URL（用于指纹查找/存储）
         """
-        from tools.highlight_element import HighlightElementTool
         from memory.fingerprint_storage import get_fingerprint_storage
+        from tools.highlight_element import HighlightElementTool
 
         tool = HighlightElementTool()
         storage = get_fingerprint_storage()

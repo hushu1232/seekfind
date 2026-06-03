@@ -15,12 +15,12 @@
   - 语义数据（Episode/Fact/Foresight）→ Chroma
 """
 
-from enum import Enum
-from dataclasses import dataclass, field
 import time
+from dataclasses import dataclass, field
+from enum import StrEnum
 
 
-class MemoryType(str, Enum):
+class MemoryType(StrEnum):
     """记忆类型（参考 EverCore MemoryType）"""
     EPISODE = "episode"          # 情景记忆（对话上下文）
     ATOMIC_FACT = "atomic_fact"  # 原子事实（操作知识点）

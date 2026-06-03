@@ -12,10 +12,8 @@
 
 import asyncio
 import base64
-import json
-import struct
-import pytest
 
+import pytest
 from voice.tts import TTSService
 
 
@@ -124,7 +122,7 @@ class TestASRBasic:
 
     def test_asr_service_import(self):
         """ASR 服务可导入。"""
-        from voice.asr import asr_service, ASRState
+        from voice.asr import ASRState, asr_service
         assert asr_service is not None
         assert asr_service.state in (ASRState.IDLE, ASRState.LISTENING)
 
@@ -164,7 +162,7 @@ class TestASRBasic:
 
     def test_asr_state_transitions(self):
         """状态转换。"""
-        from voice.asr import asr_service, ASRState
+        from voice.asr import ASRState, asr_service
 
         asr_service.set_state(ASRState.IDLE)
         assert asr_service.state == ASRState.IDLE
@@ -223,15 +221,15 @@ class TestVoicePipelineEndToEnd:
         ]
         results = await asyncio.gather(*tasks)
 
-        for i, result in enumerate(results):
+        for _i, result in enumerate(results):
             assert len(result["audio"]) > 0
 
-        print(f"\n  并发合成 3 次，全部成功")
+        print("\n  并发合成 3 次，全部成功")
 
     @pytest.mark.asyncio
     async def test_wakeword_to_tts_chain(self):
         """唤醒词 → 状态切换 → TTS 输出 链路。"""
-        from voice.asr import asr_service, ASRState
+        from voice.asr import ASRState, asr_service
         from voice.tts import tts_service
 
         # 模拟唤醒
@@ -295,4 +293,4 @@ class TestVoicePipelineEndToEnd:
         r2 = await tts.synthesize("男声语音")
         assert len(r2["audio"]) > 0
 
-        print(f"\n  语音切换: 默认 → 男声，两次合成均成功")
+        print("\n  语音切换: 默认 → 男声，两次合成均成功")

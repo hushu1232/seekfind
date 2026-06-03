@@ -7,7 +7,6 @@
 
 import asyncio
 import json
-from typing import Any
 
 import structlog
 
@@ -47,7 +46,7 @@ class FlowWorker:
 
             return {"success": True, "flow": data.get("flow")}
 
-        except asyncio.TimeoutError:
+        except TimeoutError:
             logger.warning("Flow Worker 超时", intent=intent)
             return {"success": False, "error": "操作流匹配超时"}
         except Exception as e:

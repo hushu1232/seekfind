@@ -9,9 +9,9 @@
   - 会话隔离
 """
 
-import json
+from unittest.mock import patch
+
 import pytest
-from unittest.mock import AsyncMock, patch, MagicMock
 
 
 class TestHealthEndpoint:
@@ -24,10 +24,10 @@ class TestHealthEndpoint:
         with patch("app.agent") as mock_agent:
             mock_agent.__bool__ = lambda self: True
             from app import app
-            from httpx import AsyncClient, ASGITransport
+            from httpx import ASGITransport, AsyncClient
 
             transport = ASGITransport(app=app)
-            async with AsyncClient(transport=transport, base_url="http://test") as client:
+            async with AsyncClient(transport=transport, base_url="http://test"):
                 # 简单验证路由存在
                 assert app is not None
 

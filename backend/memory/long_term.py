@@ -28,10 +28,9 @@ Embedding：
 import asyncio
 from typing import Any
 
-import structlog
 import chromadb
+import structlog
 from chromadb.config import Settings as ChromaSettings
-
 from config import settings
 
 logger = structlog.get_logger()

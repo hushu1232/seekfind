@@ -60,7 +60,7 @@ _FALLBACK_HEADERS_TEMPLATES = [
 def _get_header_generator():
     """延迟加载 browserforge HeaderGenerator（单例缓存）。"""
     try:
-        from browserforge.headers import HeaderGenerator, Browser
+        from browserforge.headers import Browser, HeaderGenerator
 
         # 参考 Scrapling 的做法：限定主流浏览器版本范围
         browsers = [

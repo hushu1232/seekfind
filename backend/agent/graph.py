@@ -11,16 +11,13 @@ Supervisor + Workers 架构：
 """
 
 import asyncio
-import json
-from typing import Any
 
 import structlog
-from langchain_core.messages import AIMessage, HumanMessage, SystemMessage
+from langchain_core.messages import SystemMessage
+from utils.tracing import trace_span
 
 from agent.state import AgentState
 from agent.supervisor import Supervisor
-from agent.workers import RAGWorker, VisionWorker, FlowWorker, HighlightWorker
-from utils.tracing import trace_span
 
 logger = structlog.get_logger()
 

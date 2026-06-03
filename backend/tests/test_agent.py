@@ -10,12 +10,10 @@
   - LangGraph 子图构建
 """
 
-import json
-import pytest
-from unittest.mock import AsyncMock, MagicMock, patch
+from unittest.mock import AsyncMock, MagicMock
 
-from agent_engine import QiuWenAgent, AgentState, _build_graph_real
-from langchain_core.messages import AIMessage, HumanMessage
+import pytest
+from agent_engine import QiuWenAgent, _build_graph_real
 
 
 class TestAgentIntentClassification:

@@ -74,7 +74,7 @@ class BrowserController:
             result = await asyncio.wait_for(future, timeout=timeout)
             return result
 
-        except asyncio.TimeoutError:
+        except TimeoutError:
             logger.warning("浏览器控制超时", msg_type=msg_type, req_id=req_id)
             return {"error": f"超时（{timeout}秒）"}
         except Exception as e:

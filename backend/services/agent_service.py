@@ -9,15 +9,14 @@
   4. 集成安全检查和可观测性
 """
 
-import asyncio
-from typing import AsyncGenerator, Optional, Any
+from collections.abc import AsyncGenerator
 
 import structlog
-
-from .base import BaseService, ServiceStatus
-from core.security import get_security_guard
-from core.observability import get_metrics, get_tracer, get_request_logger
 from core.degradation import get_degradation_manager
+from core.observability import get_metrics, get_request_logger, get_tracer
+from core.security import get_security_guard
+
+from .base import BaseService
 
 logger = structlog.get_logger()
 
@@ -73,7 +72,7 @@ class AgentService(BaseService):
         self,
         query: str,
         session_id: str,
-        page_context: Optional[dict] = None,
+        page_context: dict | None = None,
     ) -> AsyncGenerator[dict, None]:
         """
         处理用户查询，流式返回结果

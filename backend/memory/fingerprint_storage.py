@@ -33,7 +33,6 @@ import json
 import sqlite3
 import threading
 import time
-from dataclasses import dataclass
 from difflib import SequenceMatcher
 from functools import lru_cache
 from pathlib import Path

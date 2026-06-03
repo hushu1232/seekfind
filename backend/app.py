@@ -20,19 +20,23 @@ import uuid
 from contextlib import asynccontextmanager
 
 import structlog
+from agent_engine import QiuWenAgent
+from browser.controller import browser_controller
+from config import settings
 from fastapi import FastAPI, WebSocket, WebSocketDisconnect
 from fastapi.responses import JSONResponse
-
-from config import settings
-from agent_engine import QiuWenAgent
-from memory.short_term import ShortTermMemory
 from indexer.build_index import IndexBuilder
 from indexer.crawler import CrawledDoc
-from browser.controller import browser_controller
+from memory.short_term import ShortTermMemory
 from schemas import (
-    UserMessage, PageEventMessage, FeedbackMessage, AudioMessage,
-    ModelConfigUpdate, IndexUrlRequest, IndexTextRequest,
-    IndexStatusResponse, PageContext,
+    AudioMessage,
+    FeedbackMessage,
+    IndexStatusResponse,
+    IndexTextRequest,
+    IndexUrlRequest,
+    ModelConfigUpdate,
+    PageEventMessage,
+    UserMessage,
 )
 
 logger = structlog.get_logger()

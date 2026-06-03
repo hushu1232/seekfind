@@ -5,10 +5,12 @@
 扩展 AgentState，支持 Supervisor + Workers 架构。
 """
 
-from typing import Annotated, Sequence, Any
-from typing_extensions import TypedDict
+from collections.abc import Sequence
+from typing import Annotated, Any
+
 from langchain_core.messages import BaseMessage
 from langgraph.graph.message import add_messages
+from typing_extensions import TypedDict
 
 
 class TaskStep(TypedDict, total=False):

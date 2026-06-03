@@ -17,16 +17,16 @@
 
 import asyncio
 import time
-from enum import Enum
-from dataclasses import dataclass, field
-from typing import Optional, Callable, Any
+from collections.abc import Callable
+from dataclasses import dataclass
+from enum import StrEnum
 
 import structlog
 
 logger = structlog.get_logger()
 
 
-class FeatureStatus(str, Enum):
+class FeatureStatus(StrEnum):
     """功能状态"""
     AVAILABLE = "available"       # 可用
     DEGRADED = "degraded"         # 降级（部分功能受限）
@@ -42,7 +42,7 @@ class DegradationEvent:
     reason: str
     timestamp: float
     retry_count: int = 0
-    recovered_at: Optional[float] = None
+    recovered_at: float | None = None
 
 
 @dataclass
@@ -53,7 +53,7 @@ class FeatureConfig:
     auto_retry: bool = True
     retry_interval: float = 60.0  # 重试间隔（秒）
     max_retries: int = 5          # 最大重试次数
-    recovery_func: Optional[Callable] = None
+    recovery_func: Callable | None = None
 
 
 class FeatureDegradationManager:
@@ -128,7 +128,7 @@ class FeatureDegradationManager:
         """获取所有功能状态"""
         return {k: v.value for k, v in self._features.items()}
 
-    def get_events(self, feature: Optional[str] = None) -> list[DegradationEvent]:
+    def get_events(self, feature: str | None = None) -> list[DegradationEvent]:
         """获取降级事件"""
         if feature:
             return [e for e in self._events if e.feature == feature]
@@ -252,7 +252,7 @@ class FeatureDegradationManager:
 # ---------------------------------------------------------------------------
 # 全局单例
 # ---------------------------------------------------------------------------
-_degradation_manager: Optional[FeatureDegradationManager] = None
+_degradation_manager: FeatureDegradationManager | None = None
 
 
 def get_degradation_manager() -> FeatureDegradationManager:

@@ -12,11 +12,11 @@
 """
 
 import time
-import pytest
 
-from memory.types import MemoryType, MemoryRecord, UserProfile, AgentCase
+import pytest
+from memory.extractors import CaseExtractor, ForesightExtractor, ProfileExtractor
 from memory.persistent_memory import PersistentMemory
-from memory.extractors import ProfileExtractor, CaseExtractor, ForesightExtractor
+from memory.types import AgentCase, MemoryRecord, MemoryType, UserProfile
 
 
 class TestPersistentMemory:

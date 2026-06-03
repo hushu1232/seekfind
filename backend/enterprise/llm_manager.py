@@ -22,20 +22,17 @@ T4.3: 云端 API 作为企业备选方案
   ENTERPRISE_MODEL=gpt-4o
 """
 
-import asyncio
-from enum import Enum
-from typing import Optional
+from enum import StrEnum
 
 import httpx
 import structlog
-from langchain_openai import ChatOpenAI
-
 from config import settings
+from langchain_openai import ChatOpenAI
 
 logger = structlog.get_logger()
 
 
-class LLMSource(str, Enum):
+class LLMSource(StrEnum):
     """LLM 来源"""
     LOCAL = "local"
     ENTERPRISE = "enterprise"
@@ -49,8 +46,8 @@ class EnterpriseLLMManager:
     """
 
     def __init__(self):
-        self._local_llm: Optional[ChatOpenAI] = None
-        self._enterprise_llm: Optional[ChatOpenAI] = None
+        self._local_llm: ChatOpenAI | None = None
+        self._enterprise_llm: ChatOpenAI | None = None
         self._current_source: LLMSource = LLMSource.LOCAL
         self._local_failures: int = 0
         self._fallback_threshold: int = settings.fallback_threshold
@@ -110,14 +107,13 @@ class EnterpriseLLMManager:
             (llm, source) 元组
         """
         # 检查是否需要降级
-        if self._should_fallback():
-            if self._enterprise_llm:
-                logger.warning(
-                    "本地模型不可用，降级到企业 API",
-                    failures=self._local_failures,
-                )
-                self._current_source = LLMSource.ENTERPRISE
-                return self._enterprise_llm, LLMSource.ENTERPRISE
+        if self._should_fallback() and self._enterprise_llm:
+            logger.warning(
+                "本地模型不可用，降级到企业 API",
+                failures=self._local_failures,
+            )
+            self._current_source = LLMSource.ENTERPRISE
+            return self._enterprise_llm, LLMSource.ENTERPRISE
 
         # 默认使用本地
         self._current_source = LLMSource.LOCAL
@@ -130,10 +126,7 @@ class EnterpriseLLMManager:
             return True
 
         # 本地不可用
-        if not self._local_available:
-            return True
-
-        return False
+        return bool(not self._local_available)
 
     def record_local_failure(self):
         """记录本地模型失败"""
@@ -174,7 +167,7 @@ class EnterpriseLLMManager:
 # ---------------------------------------------------------------------------
 # 全局单例
 # ---------------------------------------------------------------------------
-_enterprise_llm_manager: Optional[EnterpriseLLMManager] = None
+_enterprise_llm_manager: EnterpriseLLMManager | None = None
 
 
 def get_enterprise_llm_manager() -> EnterpriseLLMManager:

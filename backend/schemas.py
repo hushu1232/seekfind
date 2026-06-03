@@ -12,24 +12,22 @@
   msg = UserMessage(text="怎么创建项目", page_context=PageContext(url="..."))
 """
 
-from enum import Enum
-from typing import Optional
+from enum import StrEnum
 
 from pydantic import BaseModel, Field
-
 
 # ---------------------------------------------------------------------------
 # 枚举
 # ---------------------------------------------------------------------------
 
-class IntentType(str, Enum):
+class IntentType(StrEnum):
     """意图分类结果。"""
     DOC_QUESTION = "doc_question"
     GUIDE_REQUEST = "guide_request"
     CHAT = "chat"
 
 
-class BallState(str, Enum):
+class BallState(StrEnum):
     """球体状态。"""
     IDLE = "idle"
     THINKING = "thinking"
@@ -39,7 +37,7 @@ class BallState(str, Enum):
     SLEEPING = "sleeping"
 
 
-class PageEventType(str, Enum):
+class PageEventType(StrEnum):
     """页面事件类型。"""
     CLICK = "click"
     INPUT = "input"
@@ -63,16 +61,16 @@ class UserMessage(BaseModel):
     """用户消息。"""
     type: str = "user_message"
     text: str = Field(..., min_length=1, max_length=5000)
-    page_context: Optional[PageContext] = None
+    page_context: PageContext | None = None
 
 
 class PageEvent(BaseModel):
     """页面事件。"""
     event_type: PageEventType
     timestamp: int = 0
-    target: Optional[str] = None
-    value: Optional[str] = None
-    url: Optional[str] = None
+    target: str | None = None
+    value: str | None = None
+    url: str | None = None
 
 
 class PageEventMessage(BaseModel):
@@ -85,7 +83,7 @@ class FeedbackData(BaseModel):
     """反馈数据。"""
     step_id: str
     is_correct: bool
-    comment: Optional[str] = None
+    comment: str | None = None
 
 
 class FeedbackMessage(BaseModel):
@@ -147,7 +145,7 @@ class HighlightCommand(BaseModel):
     """高亮指令。"""
     type: str = "highlight"
     selector: str
-    fallback_selector: Optional[str] = None
+    fallback_selector: str | None = None
     description: str = ""
     order: int = 1
     style: str = "pulse"  # pulse / glow / arrow
@@ -171,7 +169,7 @@ class ScreenshotAnnotated(BaseModel):
     """截图标注结果。"""
     type: str = "screenshot_annotated"
     image_base64: str
-    description: Optional[str] = None
+    description: str | None = None
 
 
 class ProactiveHint(BaseModel):
@@ -217,8 +215,8 @@ ServerMessage = (
 
 class ModelConfigUpdate(BaseModel):
     """模型配置更新请求。"""
-    model_strategy: Optional[str] = None
-    ollama_model: Optional[str] = None
+    model_strategy: str | None = None
+    ollama_model: str | None = None
 
 
 class IndexUrlRequest(BaseModel):
@@ -236,4 +234,4 @@ class IndexStatusResponse(BaseModel):
     """索引状态响应。"""
     status: str
     doc_count: int = 0
-    error: Optional[str] = None
+    error: str | None = None

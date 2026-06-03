@@ -16,11 +16,11 @@
 
 import time
 import uuid
-from typing import Optional, Any
+from collections import defaultdict
 from contextlib import contextmanager
 from dataclasses import dataclass, field
-from collections import defaultdict
 from functools import wraps
+from typing import Any
 
 import structlog
 
@@ -52,12 +52,12 @@ class MetricsCollector:
         self._histograms: dict[str, list[float]] = defaultdict(list)
         self._gauges: dict[str, float] = {}
 
-    def increment(self, name: str, value: int = 1, labels: Optional[dict[str, str]] = None):
+    def increment(self, name: str, value: int = 1, labels: dict[str, str] | None = None):
         """递增计数器"""
         key = self._make_key(name, labels)
         self._counters[key] += value
 
-    def observe(self, name: str, value: float, labels: Optional[dict[str, str]] = None):
+    def observe(self, name: str, value: float, labels: dict[str, str] | None = None):
         """记录直方图值"""
         key = self._make_key(name, labels)
         self._histograms[key].append(value)
@@ -66,7 +66,7 @@ class MetricsCollector:
         if len(self._histograms[key]) > 10000:
             self._histograms[key] = self._histograms[key][-5000:]
 
-    def set_gauge(self, name: str, value: float, labels: Optional[dict[str, str]] = None):
+    def set_gauge(self, name: str, value: float, labels: dict[str, str] | None = None):
         """设置仪表盘值"""
         key = self._make_key(name, labels)
         self._gauges[key] = value
@@ -105,7 +105,7 @@ class MetricsCollector:
         self._histograms.clear()
         self._gauges.clear()
 
-    def _make_key(self, name: str, labels: Optional[dict[str, str]] = None) -> str:
+    def _make_key(self, name: str, labels: dict[str, str] | None = None) -> str:
         """生成指标键"""
         if labels:
             label_str = ",".join(f"{k}={v}" for k, v in sorted(labels.items()))
@@ -139,10 +139,10 @@ class Span:
     """追踪 Span"""
     trace_id: str
     span_id: str
-    parent_id: Optional[str]
+    parent_id: str | None
     name: str
     start_time: float
-    end_time: Optional[float] = None
+    end_time: float | None = None
     attributes: dict[str, Any] = field(default_factory=dict)
     events: list[dict] = field(default_factory=list)
     status: str = "ok"  # ok, error
@@ -157,10 +157,10 @@ class Tracer:
 
     def __init__(self):
         self._spans: list[Span] = []
-        self._current_span: Optional[Span] = None
+        self._current_span: Span | None = None
 
     @contextmanager
-    def start_span(self, name: str, attributes: Optional[dict[str, Any]] = None):
+    def start_span(self, name: str, attributes: dict[str, Any] | None = None):
         """
         开始一个新的 Span
 
@@ -199,11 +199,11 @@ class Tracer:
             self._spans.append(span)
             self._current_span = parent_span
 
-    def get_current_span(self) -> Optional[Span]:
+    def get_current_span(self) -> Span | None:
         """获取当前 Span"""
         return self._current_span
 
-    def get_spans(self, trace_id: Optional[str] = None) -> list[Span]:
+    def get_spans(self, trace_id: str | None = None) -> list[Span]:
         """获取所有 Span"""
         if trace_id:
             return [s for s in self._spans if s.trace_id == trace_id]
@@ -332,7 +332,7 @@ class HealthCheckResult:
     status: str  # healthy, degraded, unhealthy
     checks: dict[str, bool]
     timestamp: float
-    details: Optional[dict] = None
+    details: dict | None = None
 
 
 class HealthChecker:
@@ -376,10 +376,10 @@ class HealthChecker:
 # ---------------------------------------------------------------------------
 # 全局单例
 # ---------------------------------------------------------------------------
-_metrics: Optional[MetricsCollector] = None
-_tracer: Optional[Tracer] = None
-_request_logger: Optional[RequestLogger] = None
-_health_checker: Optional[HealthChecker] = None
+_metrics: MetricsCollector | None = None
+_tracer: Tracer | None = None
+_request_logger: RequestLogger | None = None
+_health_checker: HealthChecker | None = None
 
 
 def get_metrics() -> MetricsCollector:
@@ -418,7 +418,7 @@ def get_health_checker() -> HealthChecker:
 # 装饰器
 # ---------------------------------------------------------------------------
 
-def trace_function(name: Optional[str] = None):
+def trace_function(name: str | None = None):
     """
     追踪函数执行
 
@@ -443,7 +443,7 @@ def trace_function(name: Optional[str] = None):
                     result = await func(*args, **kwargs)
                     span.attributes["duration"] = time.time() - start_time
                     return result
-                except Exception as e:
+                except Exception:
                     span.status = "error"
                     raise
 
@@ -474,7 +474,7 @@ def record_metrics(name: str):
                 metrics.observe(f"{name}_duration", duration)
 
                 return result
-            except Exception as e:
+            except Exception:
                 metrics.increment(f"{name}_errors")
                 raise
 

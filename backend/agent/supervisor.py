@@ -12,15 +12,13 @@
 不执行重任务，只做拆解。
 """
 
-import json
 import asyncio
-from typing import Any
+import json
 
 import structlog
-from langchain_core.messages import HumanMessage, SystemMessage
-from langchain_openai import ChatOpenAI
-
 from config import settings
+from langchain_core.messages import HumanMessage
+from langchain_openai import ChatOpenAI
 
 logger = structlog.get_logger()
 
@@ -122,7 +120,7 @@ class Supervisor:
             logger.warning("Supervisor 输出格式错误，降级")
             return {"steps": [], "use_fallback": True}
 
-        except asyncio.TimeoutError:
+        except TimeoutError:
             logger.warning("Supervisor 超时，降级")
             return {"steps": [], "use_fallback": True}
         except Exception as e:

@@ -14,7 +14,6 @@
   - save_memory / recall_memory
 """
 
-import pytest
 from memory.short_term import ShortTermMemory
 
 
@@ -59,7 +58,7 @@ class TestShortTermMemory:
         short_term_memory.add("user", "你好")
         short_term_memory.add("assistant", "你好！")
 
-        from langchain_core.messages import HumanMessage, AIMessage
+        from langchain_core.messages import AIMessage, HumanMessage
 
         lc_messages = short_term_memory.to_langchain_messages()
         assert len(lc_messages) == 2

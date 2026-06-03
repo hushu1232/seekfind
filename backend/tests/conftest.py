@@ -9,11 +9,10 @@
   - sample_settings: 测试配置
 """
 
-import sys
-import os
 import json
+import sys
 from pathlib import Path
-from unittest.mock import AsyncMock, MagicMock
+from unittest.mock import AsyncMock
 
 import pytest
 

@@ -2,9 +2,7 @@
 Token 计数与上下文管理测试
 """
 
-import pytest
-from langchain_core.messages import SystemMessage, HumanMessage, AIMessage
-
+from langchain_core.messages import AIMessage, HumanMessage, SystemMessage
 from utils.token_counter import TokenManager
 
 

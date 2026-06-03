@@ -14,6 +14,7 @@
 
 import json
 import os
+
 import pytest
 
 # 标记所有测试为需要网络
@@ -138,7 +139,7 @@ class TestKnowledgeBaseIntegrity:
 
         total_entries = 0
         for f in json_files:
-            with open(f, "r", encoding="utf-8") as fp:
+            with open(f, encoding="utf-8") as fp:
                 data = json.load(fp)
             assert "product" in data, f"{f} 缺少 product"
             assert "entries" in data, f"{f} 缺少 entries"
@@ -158,7 +159,7 @@ class TestKnowledgeBaseIntegrity:
             filepath = os.path.join(self.KNOWLEDGE_DIR, filename)
             if not os.path.exists(filepath):
                 continue
-            with open(filepath, "r", encoding="utf-8") as fp:
+            with open(filepath, encoding="utf-8") as fp:
                 data = json.load(fp)
             count = len(data["entries"])
             print(f"\n  {data['product']}: {count} 条")
@@ -173,7 +174,7 @@ class TestKnowledgeBaseIntegrity:
         total_entries = 0
 
         for f in json_files:
-            with open(f, "r", encoding="utf-8") as fp:
+            with open(f, encoding="utf-8") as fp:
                 data = json.load(fp)
             for entry in data["entries"]:
                 total_entries += 1
@@ -228,7 +229,7 @@ class TestIndexBuilderReal:
         assert fp["selector"] == "#btn"
         storage2.close()
 
-        print(f"\n  持久化验证: 写入后重新打开可查到")
+        print("\n  持久化验证: 写入后重新打开可查到")
 
 
 class TestToolChainEndToEnd:
@@ -237,9 +238,9 @@ class TestToolChainEndToEnd:
     @pytest.mark.asyncio
     async def test_search_highlight_chain(self, mock_long_term_memory, tmp_path):
         """搜索 → 高亮 链路。"""
-        from tools.search_docs import SearchDocsTool
-        from tools.highlight_element import HighlightElementTool
         from memory.fingerprint_storage import FingerprintStorage
+        from tools.highlight_element import HighlightElementTool
+        from tools.search_docs import SearchDocsTool
 
         # Step 1: 搜索
         search = SearchDocsTool()
@@ -277,8 +278,8 @@ class TestToolChainEndToEnd:
     @pytest.mark.asyncio
     async def test_classify_snapshot_chain(self):
         """分类 → 快照 链路。"""
-        from tools.classify_page import ClassifyPageTool
         from tools.browser_tools import BrowserSnapshotTool
+        from tools.classify_page import ClassifyPageTool
 
         # Step 1: 分类
         classify = ClassifyPageTool()
@@ -290,7 +291,7 @@ class TestToolChainEndToEnd:
         # Step 2: 快照工具可用
         snapshot = BrowserSnapshotTool()
         assert snapshot.name == "browser_snapshot"
-        print(f"  快照工具: schema 完整")
+        print("  快照工具: schema 完整")
 
     def test_all_mcp_tools_callable(self):
         """所有 MCP 工具可调用。"""
@@ -306,7 +307,7 @@ class TestToolChainEndToEnd:
 
     def test_tool_registry_complete(self):
         """工具注册表完整。"""
-        from tools import get_tool_by_name, _TOOL_REGISTRY
+        from tools import _TOOL_REGISTRY, get_tool_by_name
 
         expected = [
             "search_docs", "fetch_doc_page", "save_memory", "recall_memory",

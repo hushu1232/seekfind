@@ -12,9 +12,7 @@
   - _extract_links
 """
 
-import json
 import pytest
-
 from indexer.build_index import IndexBuilder
 from indexer.crawler import CrawledDoc, DocCrawler
 
@@ -112,8 +110,8 @@ class TestDocCrawler:
         links = DocCrawler._extract_links(html, "example.com")
         # 只保留同域 http/https 链接
         assert len(links) >= 1
-        assert not any("javascript:" in l for l in links)
-        assert not any("mailto:" in l for l in links)
+        assert not any("javascript:" in link for link in links)
+        assert not any("mailto:" in link for link in links)
 
     def test_extract_links_limit(self):
         """每页最多 50 个链接。"""

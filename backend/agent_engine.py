@@ -29,10 +29,17 @@ P0 改进：
 import asyncio
 import json
 import time
-from typing import Any, AsyncGenerator, Annotated, Sequence
-from typing_extensions import TypedDict
+from collections.abc import AsyncGenerator, Sequence
+from typing import Annotated, Any
 
 import structlog
+from browser.controller import browser_controller
+from config import ModelStrategy, settings
+
+# P0: 核心模块
+from core.degradation import FeatureConfig, get_degradation_manager
+from core.observability import get_metrics, get_request_logger, get_tracer
+from core.security import get_security_guard
 from langchain_core.messages import (
     AIMessage,
     BaseMessage,
@@ -44,23 +51,15 @@ from langchain_openai import ChatOpenAI
 from langgraph.graph import END, StateGraph
 from langgraph.graph.message import add_messages
 from langgraph.prebuilt import ToolNode
-
-from config import settings, ModelStrategy
-from memory.short_term import ShortTermMemory
-from memory.long_term import LongTermMemory
+from memory.extractors import CaseExtractor, ForesightExtractor, ProfileExtractor
 from memory.fingerprint_storage import get_fingerprint_storage
-from memory.persistent_memory import get_persistent_memory, PersistentMemory
-from memory.types import UserProfile, AgentCase
-from memory.extractors import ProfileExtractor, CaseExtractor, ForesightExtractor
-from browser.controller import browser_controller
+from memory.long_term import LongTermMemory
+from memory.persistent_memory import PersistentMemory, get_persistent_memory
+from memory.short_term import ShortTermMemory
 from tools import get_langchain_tools
-from utils.token_counter import get_token_manager, TokenManager
+from typing_extensions import TypedDict
+from utils.token_counter import TokenManager, get_token_manager
 from utils.tracing import trace_span
-
-# P0: 核心模块
-from core.degradation import get_degradation_manager, FeatureConfig
-from core.security import get_security_guard
-from core.observability import get_metrics, get_tracer, get_request_logger
 
 logger = structlog.get_logger()
 
@@ -278,9 +277,9 @@ class QiuWenAgent:
 
         # 多 Agent 协作图（Supervisor + Workers）
         try:
-            from agent.supervisor import Supervisor
-            from agent.workers import RAGWorker, VisionWorker, FlowWorker, HighlightWorker
             from agent.graph import build_multi_agent_graph
+            from agent.supervisor import Supervisor
+            from agent.workers import FlowWorker, HighlightWorker, RAGWorker, VisionWorker
 
             self._supervisor = Supervisor()
             await self._supervisor.initialize()
@@ -382,7 +381,7 @@ class QiuWenAgent:
                 result = intent if intent in ("doc_question", "guide_request", "chat") else "doc_question"
                 span.set_attribute("intent", result)
                 return result
-            except asyncio.TimeoutError:
+            except TimeoutError:
                 logger.warning("意图分类超时，默认 doc_question")
                 span.add_event("timeout")
                 return "doc_question"
@@ -487,7 +486,6 @@ class QiuWenAgent:
 
             full_response = ""
             has_tool_calls = False
-            TOOL_TIMEOUT = 30
 
             async for event in graph.astream({"messages": messages}, stream_mode="updates"):
                 for node_name, node_output in event.items():

@@ -135,8 +135,9 @@ class IndexBuilder:
         Returns:
             总索引的 chunk 数量
         """
-        from indexer.crawler import DocCrawler
         from urllib.parse import urlparse
+
+        from indexer.crawler import DocCrawler
 
         crawler = DocCrawler(max_pages=max_pages)
         base_domain = urlparse(url).netloc

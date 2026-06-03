@@ -19,7 +19,7 @@
   当本地 Ollama 不可用时自动降级到企业 API
 """
 
-from enum import Enum
+from enum import StrEnum
 
 from pydantic_settings import BaseSettings, SettingsConfigDict
 
@@ -27,7 +27,7 @@ from pydantic_settings import BaseSettings, SettingsConfigDict
 # ---------------------------------------------------------------------------
 # 枚举：模型策略
 # ---------------------------------------------------------------------------
-class ModelStrategy(str, Enum):
+class ModelStrategy(StrEnum):
     """
     四层模型策略：
       - LOCAL:      仅本地 Ollama 模型（零成本，适合 8GB+ 显存）

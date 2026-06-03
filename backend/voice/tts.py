@@ -24,9 +24,6 @@ edge-tts 优势：
 """
 
 import base64
-import io
-import json
-import struct
 
 import structlog
 
@@ -54,11 +51,12 @@ class TTSService:
         """
         # 优先 edge-tts（在线）
         try:
-            import edge_tts
-            self._use_edge_tts = True
-            logger.info("TTS 引擎初始化完成", engine="edge-tts", voice=self._voice)
-            return
-        except ImportError:
+            import importlib.util
+            if importlib.util.find_spec("edge_tts") is not None:
+                self._use_edge_tts = True
+                logger.info("TTS 引擎初始化完成", engine="edge-tts", voice=self._voice)
+                return
+        except (ImportError, ValueError):
             pass
 
         # 降级到 pyttsx3（离线）
@@ -122,9 +120,8 @@ class TTSService:
     async def _synthesize_pyttsx3(self, text: str) -> dict:
         """使用 pyttsx3 合成语音（离线模式）。"""
         try:
-            import pyttsx3
-            import tempfile
             import os
+            import tempfile
 
             # 保存到临时文件
             with tempfile.NamedTemporaryFile(suffix=".wav", delete=False) as f:
@@ -164,8 +161,8 @@ class TTSService:
     async def _synthesize_edge_tts(self, text: str) -> dict:
         """使用 edge-tts 合成语音。"""
         try:
+
             import edge_tts
-            import asyncio
 
             # 创建通信实例
             communicate = edge_tts.Communicate(text, self._voice)

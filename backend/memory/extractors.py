@@ -12,13 +12,13 @@
   - 求问使用规则 + 关键词匹配（轻量，不依赖额外 LLM 调用）
 """
 
+import hashlib
 import re
 import time
-import hashlib
 
 import structlog
 
-from memory.types import UserProfile, AgentCase
+from memory.types import AgentCase, UserProfile
 
 logger = structlog.get_logger()
 
@@ -67,9 +67,8 @@ class ProfileExtractor:
 
         # 提取产品
         for product, keywords in self.PRODUCT_KEYWORDS.items():
-            if any(kw in text for kw in keywords):
-                if product not in profile.products:
-                    profile.products.append(product)
+            if any(kw in text for kw in keywords) and product not in profile.products:
+                profile.products.append(product)
 
         # 提取技术水平
         for level, indicators in self.SKILL_INDICATORS.items():
@@ -92,9 +91,8 @@ class ProfileExtractor:
         """从页面事件中提取产品信息。"""
         url_lower = url.lower()
         for product, keywords in self.PRODUCT_KEYWORDS.items():
-            if any(kw in url_lower for kw in keywords):
-                if product not in profile.products:
-                    profile.products.append(product)
+            if any(kw in url_lower for kw in keywords) and product not in profile.products:
+                profile.products.append(product)
         return profile
 
 
