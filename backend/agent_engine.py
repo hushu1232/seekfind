@@ -40,6 +40,7 @@ from config import ModelStrategy, settings
 from core.degradation import FeatureConfig, get_degradation_manager
 from core.observability import get_metrics, get_request_logger, get_tracer
 from core.security import get_security_guard
+from core.language import detect_language, get_prompt, get_message
 from langchain_core.messages import (
     AIMessage,
     BaseMessage,
@@ -387,7 +388,7 @@ class QiuWenAgent:
                 return "doc_question"
 
     # -----------------------------------------------------------------------
-    # 流式回复（主入口）- P1: 并行执行优化
+    # 流式回复（主入口）- P1: 并行执行优化, P3: 多语言支持
     # -----------------------------------------------------------------------
     async def stream_reply(
         self, text: str, session: ShortTermMemory, page_context: dict[str, Any] | None = None,
@@ -395,7 +396,10 @@ class QiuWenAgent:
         # P0: 安全检查
         check_result = self._security.validate_input(text)
         if not check_result.is_safe:
-            yield {"type": "error", "message": check_result.reason}
+            # P3: 多语言错误消息
+            lang = detect_language(text)
+            error_msg = get_message("error_not_safe", lang)
+            yield {"type": "error", "message": error_msg}
             return
 
         # P0: 可观测性
@@ -432,14 +436,20 @@ class QiuWenAgent:
             self._metrics.observe("agent.parallel.preparation", parallel_time)
 
             try:
+                # P3: 检测语言并获取多语言 Prompt
+                lang = detect_language(text)
+                span.set_attribute("language", lang)
+
                 if intent == "guide_request":
-                    async for chunk in self._run_graph(self._guide_graph, SYSTEM_PROMPTS["guide"], text, session, page_info, context):
+                    prompt = get_prompt("guide", lang)
+                    async for chunk in self._run_graph(self._guide_graph, prompt, text, session, page_info, context):
                         yield chunk
                 elif intent == "doc_question":
-                    async for chunk in self._run_graph(self._rag_graph, SYSTEM_PROMPTS["doc"], text, session, page_info, context):
+                    prompt = get_prompt("doc", lang)
+                    async for chunk in self._run_graph(self._rag_graph, prompt, text, session, page_info, context):
                         yield chunk
                 else:
-                    async for chunk in self._run_chat(text, session):
+                    async for chunk in self._run_chat(text, session, lang):
                         yield chunk
 
                 # P0: 记录成功
@@ -455,7 +465,10 @@ class QiuWenAgent:
                 self._metrics.observe("agent.query.duration", duration)
                 self._request_logger.log_error(request_id=request_id, error=e)
 
-                yield {"type": "error", "message": "处理查询时出错，请稍后重试"}
+                # P3: 多语言错误消息
+                lang = detect_language(text)
+                error_msg = get_message("error_processing", lang)
+                yield {"type": "error", "message": error_msg}
 
     # -----------------------------------------------------------------------
     # 子图执行（统一方法，消除 _run_rag/_run_guide 重复）
@@ -524,11 +537,13 @@ class QiuWenAgent:
         yield {"type": "agent_response", "text": full_response}
 
     # -----------------------------------------------------------------------
-    # 闲聊
+    # 闲聊 - P3: 多语言支持
     # -----------------------------------------------------------------------
-    async def _run_chat(self, text: str, session: ShortTermMemory) -> AsyncGenerator[dict, None]:
+    async def _run_chat(self, text: str, session: ShortTermMemory, lang: str = "zh") -> AsyncGenerator[dict, None]:
+        # P3: 使用多语言 Prompt
+        prompt = get_prompt("chat", lang)
         messages = [
-            SystemMessage(content=SYSTEM_PROMPTS["chat"]),
+            SystemMessage(content=prompt),
             *session.to_langchain_messages(),
             HumanMessage(content=text),
         ]
