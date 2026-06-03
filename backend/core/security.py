@@ -7,6 +7,8 @@
   2. 验证用户输入
   3. 净化输出（移除敏感信息）
   4. 验证工具调用参数
+  5. URL 安全验证（防止 SSRF）
+  6. 速率限制
 
 安全原则：
   - 默认拒绝：不符合规则的输入一律拒绝
@@ -15,7 +17,10 @@
 """
 
 import re
+import time
 from dataclasses import dataclass
+from urllib.parse import urlparse
+from collections import defaultdict
 
 import structlog
 
@@ -47,6 +52,7 @@ class SecurityGuard:
             r"(?:你现在|你扮演|假装).*(?:是|成为|变成)",
             r"(?:不要|别).*(?:遵守|遵循|听从).*(?:规则|指令)",
             r"(?:解除|删除|清除).*(?:限制|规则|过滤)",
+            r"(?:请帮我|帮我总结).*(?:忽略|ignore).*(?:规则|rules)",
 
             # 英文注入
             r"ignore\s+(?:all\s+)?(?:previous|above|system)\s+(?:instructions|prompts|rules)",
@@ -56,6 +62,7 @@ class SecurityGuard:
             r"(?:override|bypass|disable)\s+(?:safety|content|security)\s+(?:filter|check|restriction)",
             r"(?:DAN|jailbreak|developer\s+mode)",
             r"do\s+anything\s+now",
+            r"(?:system|initial)\s+(?:prompt|instructions)\s*(?:is|:)",
         ]
 
         # 敏感信息模式
@@ -97,6 +104,39 @@ class SecurityGuard:
 
         # URL 白名单协议
         self._allowed_protocols = {"http://", "https://"}
+
+        # 允许的域名（用于 fetch_doc_page）
+        self._allowed_domains = {
+            "github.com",
+            "gitlab.com",
+            "docs.google.com",
+            "notion.so",
+            "figma.com",
+            "slack.com",
+            "discord.com",
+            "stackoverflow.com",
+            "developer.mozilla.org",
+            "w3schools.com",
+            "python.org",
+            "pypi.org",
+            "npmjs.com",
+        }
+
+        # 内网地址前缀
+        self._private_ip_prefixes = [
+            "10.",
+            "172.16.", "172.17.", "172.18.", "172.19.",
+            "172.20.", "172.21.", "172.22.", "172.23.",
+            "172.24.", "172.25.", "172.26.", "172.27.",
+            "172.28.", "172.29.", "172.30.", "172.31.",
+            "192.168.",
+            "127.",
+            "0.",
+            "localhost",
+        ]
+
+        # 速率限制存储
+        self._rate_limit_storage: dict[str, list[float]] = defaultdict(list)
 
     def validate_input(self, user_input: str) -> SecurityCheckResult:
         """
@@ -204,12 +244,17 @@ class SecurityGuard:
         # 2. 检查特定工具的参数
         if tool_name == "fetch_doc_page":
             url = args.get("url", "")
+            # 检查协议
             if not any(url.startswith(p) for p in self._allowed_protocols):
                 return SecurityCheckResult(
                     is_safe=False,
                     reason="无效的 URL 协议",
                     risk_level="medium",
                 )
+            # 检查 URL 安全性（防止 SSRF）
+            url_check = self.validate_url(url)
+            if not url_check.is_safe:
+                return url_check
 
         if tool_name == "browser_interact":
             action = args.get("action", "")
@@ -220,11 +265,97 @@ class SecurityGuard:
                     risk_level="medium",
                 )
 
+        if tool_name == "browser_snapshot":
+            selector = args.get("selector", "")
+            # 检查选择器是否包含危险字符
+            if any(char in selector for char in ["<", ">", "javascript:", "on"]):
+                return SecurityCheckResult(
+                    is_safe=False,
+                    reason="选择器包含危险字符",
+                    risk_level="medium",
+                )
+
         return SecurityCheckResult(is_safe=True)
+
+    def validate_url(self, url: str) -> SecurityCheckResult:
+        """
+        验证 URL 是否安全（防止 SSRF）
+
+        Args:
+            url: URL 字符串
+
+        Returns:
+            SecurityCheckResult: 检查结果
+        """
+        try:
+            parsed = urlparse(url)
+
+            # 1. 检查协议
+            if parsed.scheme not in ("http", "https"):
+                return SecurityCheckResult(
+                    is_safe=False,
+                    reason=f"不允许的协议: {parsed.scheme}",
+                    risk_level="high",
+                )
+
+            # 2. 检查是否是内网地址
+            hostname = parsed.hostname or ""
+            if self._is_private_ip(hostname):
+                logger.warning("检测到内网地址访问", url=url, hostname=hostname)
+                return SecurityCheckResult(
+                    is_safe=False,
+                    reason="不允许访问内网地址",
+                    risk_level="critical",
+                )
+
+            # 3. 检查域名白名单（可选）
+            # 如果需要严格限制，取消注释以下代码
+            # if hostname not in self._allowed_domains:
+            #     return SecurityCheckResult(
+            #         is_safe=False,
+            #         reason=f"域名不在白名单: {hostname}",
+            #         risk_level="medium",
+            #     )
+
+            return SecurityCheckResult(is_safe=True)
+
+        except Exception as e:
+            return SecurityCheckResult(
+                is_safe=False,
+                reason=f"URL 解析失败: {str(e)}",
+                risk_level="medium",
+            )
+
+    def _is_private_ip(self, hostname: str) -> bool:
+        """
+        检查是否是内网地址
+
+        Args:
+            hostname: 主机名或 IP
+
+        Returns:
+            bool: 是否是内网地址
+        """
+        hostname_lower = hostname.lower()
+
+        # 检查 localhost
+        if hostname_lower in ("localhost", "0.0.0.0"):
+            return True
+
+        # 检查内网 IP 前缀
+        for prefix in self._private_ip_prefixes:
+            if hostname_lower.startswith(prefix):
+                return True
+
+        # 检查 IPv6 内网地址
+        if hostname_lower.startswith("::1") or hostname_lower.startswith("fc00"):
+            return True
+
+        return False
 
     def check_rate_limit(self, user_id: str, action: str, limit: int = 10, window: float = 60.0) -> bool:
         """
-        检查速率限制
+        检查速率限制（滑动窗口）
 
         Args:
             user_id: 用户 ID
@@ -235,8 +366,28 @@ class SecurityGuard:
         Returns:
             bool: 是否允许
         """
-        # 简单的滑动窗口实现
-        # 实际生产环境应使用 Redis 或专用的速率限制服务
+        key = f"{user_id}:{action}"
+        now = time.time()
+
+        # 清理过期记录
+        self._rate_limit_storage[key] = [
+            t for t in self._rate_limit_storage[key]
+            if now - t < window
+        ]
+
+        # 检查是否超过限制
+        if len(self._rate_limit_storage[key]) >= limit:
+            logger.warning(
+                "速率限制触发",
+                user_id=user_id,
+                action=action,
+                count=len(self._rate_limit_storage[key]),
+                limit=limit,
+            )
+            return False
+
+        # 记录本次请求
+        self._rate_limit_storage[key].append(now)
         return True
 
 
