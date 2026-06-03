@@ -19,10 +19,16 @@ LangGraph 编排：
 模型降级：
   _consecutive_failures 在工具调用失败时递增，
   达到 fallback_threshold 后切换到云端模型。
+
+P0 改进：
+  - 集成功能降级管理器 (core.degradation)
+  - 集成安全守卫 (core.security)
+  - 集成可观测性 (core.observability)
 """
 
 import asyncio
 import json
+import time
 from typing import Any, AsyncGenerator, Annotated, Sequence
 from typing_extensions import TypedDict
 
@@ -50,6 +56,11 @@ from browser.controller import browser_controller
 from tools import get_langchain_tools
 from utils.token_counter import get_token_manager, TokenManager
 from utils.tracing import trace_span
+
+# P0: 核心模块
+from core.degradation import get_degradation_manager, FeatureConfig
+from core.security import get_security_guard
+from core.observability import get_metrics, get_tracer, get_request_logger
 
 logger = structlog.get_logger()
 
@@ -181,6 +192,13 @@ class QiuWenAgent:
         self._supervisor = None
         self._multi_agent_graph = None
 
+        # P0: 核心模块
+        self._degradation = get_degradation_manager()
+        self._security = get_security_guard()
+        self._metrics = get_metrics()
+        self._tracer = get_tracer()
+        self._request_logger = get_request_logger()
+
     async def initialize(self) -> None:
         """初始化 LLM、工具（带依赖注入）、LangGraph 子图。"""
         # 本地 LLM（V5: API Key 从配置读取，非硬编码）
@@ -208,13 +226,22 @@ class QiuWenAgent:
         # Token 管理（上下文窗口控制）
         self._token_manager = get_token_manager(max_tokens=4096)
 
-        # 视觉模型（可选，不阻塞启动）
+        # P0: 视觉模型（可选，使用降级管理器）
+        self._degradation.register_feature(FeatureConfig(
+            name="vision",
+            display_name="视觉定位",
+            auto_retry=True,
+            retry_interval=60.0,
+            max_retries=3,
+            recovery_func=self._init_vision_model,
+        ))
+
         try:
             from vision.moondream import MoondreamVision
             self._vision_model = MoondreamVision()
             await self._vision_model.initialize()
         except Exception as e:
-            logger.warning("视觉模型初始化失败，视觉定位不可用", error=str(e))
+            self._degradation.degrade("vision", str(e))
             self._vision_model = None
 
         # 工具（带依赖注入：long_term_memory / fingerprint_storage / vision_model / browser_controller 通过 partial 预绑定）
@@ -280,6 +307,16 @@ class QiuWenAgent:
     async def shutdown(self) -> None:
         if self._long_term:
             await self._long_term.close()
+
+    async def _init_vision_model(self) -> bool:
+        """初始化视觉模型（用于降级恢复）"""
+        try:
+            from vision.moondream import MoondreamVision
+            self._vision_model = MoondreamVision()
+            await self._vision_model.initialize()
+            return True
+        except Exception:
+            return False
 
     async def reload_model(self) -> None:
         """热切换模型。"""
@@ -356,24 +393,57 @@ class QiuWenAgent:
     async def stream_reply(
         self, text: str, session: ShortTermMemory, page_context: dict[str, Any] | None = None,
     ) -> AsyncGenerator[dict, None]:
-        yield {"type": "agent_thinking", "text": "正在思考..."}
+        # P0: 安全检查
+        check_result = self._security.validate_input(text)
+        if not check_result.is_safe:
+            yield {"type": "error", "message": check_result.reason}
+            return
 
-        intent = await self.classify_intent(text)
-        yield {"type": "intent_classified", "intent": intent}
+        # P0: 可观测性
+        request_id = f"{id(session)}:{time.time()}"
+        self._metrics.increment("agent.queries.total")
+        self._request_logger.log_request(request_id=request_id, method="stream_reply", path="agent")
 
-        page_info = ""
-        if page_context:
-            page_info = f"\n当前页面：{page_context.get('url', '')} ({page_context.get('page_type', 'unknown')})"
+        start_time = time.time()
 
-        if intent == "guide_request":
-            async for chunk in self._run_graph(self._guide_graph, SYSTEM_PROMPTS["guide"], text, session, page_info):
-                yield chunk
-        elif intent == "doc_question":
-            async for chunk in self._run_graph(self._rag_graph, SYSTEM_PROMPTS["doc"], text, session, page_info):
-                yield chunk
-        else:
-            async for chunk in self._run_chat(text, session):
-                yield chunk
+        with self._tracer.start_span("agent.stream_reply") as span:
+            span.attributes["query"] = text[:100]
+
+            yield {"type": "agent_thinking", "text": "正在思考..."}
+
+            intent = await self.classify_intent(text)
+            yield {"type": "intent_classified", "intent": intent}
+            span.attributes["intent"] = intent
+
+            page_info = ""
+            if page_context:
+                page_info = f"\n当前页面：{page_context.get('url', '')} ({page_context.get('page_type', 'unknown')})"
+
+            try:
+                if intent == "guide_request":
+                    async for chunk in self._run_graph(self._guide_graph, SYSTEM_PROMPTS["guide"], text, session, page_info):
+                        yield chunk
+                elif intent == "doc_question":
+                    async for chunk in self._run_graph(self._rag_graph, SYSTEM_PROMPTS["doc"], text, session, page_info):
+                        yield chunk
+                else:
+                    async for chunk in self._run_chat(text, session):
+                        yield chunk
+
+                # P0: 记录成功
+                duration = time.time() - start_time
+                self._metrics.increment("agent.queries.success")
+                self._metrics.observe("agent.query.duration", duration)
+                self._request_logger.log_response(request_id=request_id, status_code=200, duration=duration)
+
+            except Exception as e:
+                # P0: 记录失败
+                duration = time.time() - start_time
+                self._metrics.increment("agent.queries.error")
+                self._metrics.observe("agent.query.duration", duration)
+                self._request_logger.log_error(request_id=request_id, error=e)
+
+                yield {"type": "error", "message": "处理查询时出错，请稍后重试"}
 
     # -----------------------------------------------------------------------
     # 子图执行（统一方法，消除 _run_rag/_run_guide 重复）
