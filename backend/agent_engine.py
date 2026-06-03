@@ -55,37 +55,47 @@ logger = structlog.get_logger()
 
 
 # ---------------------------------------------------------------------------
-# 系统提示词
+# 系统提示词（优化版 — 8GB 显存友好，token 精简）
 # ---------------------------------------------------------------------------
 SYSTEM_PROMPTS = {
-    "doc": """你是「求问」，一个本地智能网页引导助手。
+    "doc": """你是求问，网页引导助手。
 
-回答文档/知识类问题的规则：
-1. 必须先调用 search_docs 工具检索本地文档
-2. 如果检索结果不够详细，调用 fetch_doc_page 获取完整页面
-3. 基于检索结果回答，引用来源
-4. 如果本地文档没有答案，明确告知用户并建议导入文档
-5. 用简洁的中文回答，步骤用数字列表
-""",
-    "guide": """你是「求问」，一个本地智能网页引导助手。
+能力：检索文档、高亮元素、录制操作流
 
-处理操作引导类问题的规则：
-1. 必须先调用 search_docs 工具检索相关操作文档
-2. 根据文档内容，给出分步操作指引
-3. 对于每个步骤，调用 highlight_element 工具在页面上高亮对应元素
-4. 如果不确定元素位置，调用 visual_locate 视觉定位
-5. 每个步骤的描述要具体（点击哪个按钮、在什么位置）
+规则：
+1. 先调用 search_docs 检索，再回答
+2. 结果不详细时调用 fetch_doc_page
+3. 回复简洁，不超过 100 字
+4. 引用来源：📚 [文档名]
+5. 不确定就说"我不确定，请导入相关文档"
 """,
-    "chat": "你是「求问」，一个友好的网页引导助手。用简洁的中文回复闲聊。不需要调用任何工具。",
+    "guide": """你是求问，网页引导助手。
+
+引导规则：
+1. 先调用 search_docs 检索
+2. 分步引导，每步一个动作
+3. 每步调用 highlight_element 高亮目标
+4. 格式：📍 [动作] [目标]
+5. 不确定位置时调用 visual_locate
+""",
+    "chat": "你是求问，友好的网页引导助手。简洁回复，不超过 50 字。",
 }
 
-INTENT_CLASSIFY_PROMPT = """判断用户问题的意图类型，只回复一个词：
-- doc_question: 关于文档/知识的问题
-- guide_request: 需要在页面上引导操作
-- chat: 闲聊/其他
+# 回复格式约束（注入到所有 prompt）
+REPLY_FORMAT = """
+回复格式：
+- 引导类：📍 点击 **[目标]**\n[已高亮]\n下一步: [简述]
+- 问答类：[直接答案]\n📚 来源: [文档]
+- 多步骤：步骤 1: [动作]\n步骤 2: [动作]
+"""
 
-用户问题：{question}
-意图类型："""
+INTENT_CLASSIFY_PROMPT = """判断意图，只回复一个词：
+- doc_question: 文档/知识问题
+- guide_request: 引导操作
+- chat: 闲聊
+
+问题：{question}
+意图："""
 
 
 # ---------------------------------------------------------------------------
@@ -374,11 +384,13 @@ class QiuWenAgent:
     ) -> AsyncGenerator[dict, None]:
         """执行 LangGraph 子图（RAG / 引导通用）。V10: 超时控制。P2: tracing。"""
         async with trace_span("agent.run_graph", prompt=text[:50]) as span:
-            context = await self._retrieve_context(text)
+            # T2.2 + T2.3: 查询改写 + 上下文感知检索
+            context = await self._retrieve_context(text, session)
             span.set_attribute("context_length", len(context))
 
+            # T1.1: 注入回复格式约束
             messages = [
-                SystemMessage(content=system_prompt + f"\n\n参考文档：\n{context}{page_info}"),
+                SystemMessage(content=system_prompt + REPLY_FORMAT + f"\n\n参考文档：\n{context}{page_info}"),
                 *session.to_langchain_messages(),
                 HumanMessage(content=text),
             ]
@@ -449,17 +461,80 @@ class QiuWenAgent:
         yield {"type": "agent_response", "text": full_response}
 
     # -----------------------------------------------------------------------
+    # 查询改写（T2.2）
+    # -----------------------------------------------------------------------
+    async def _rewrite_query(self, query: str) -> list[str]:
+        """将用户查询改写为多个变体，提升召回率。"""
+        try:
+            llm = self._get_active_llm()
+            prompt = f"""将用户问题改写为 2 个不同表述，每行一个，不要解释。
+
+用户：{query}
+改写："""
+            resp = await asyncio.wait_for(
+                llm.ainvoke([HumanMessage(content=prompt)]),
+                timeout=3,
+            )
+            rewrites = [line.strip() for line in resp.content.strip().split('\n') if line.strip()]
+            return [query] + rewrites[:2]
+        except Exception:
+            return [query]
+
+    # -----------------------------------------------------------------------
+    # 上下文感知检索（T2.3）
+    # -----------------------------------------------------------------------
+    def _build_contextual_query(self, query: str, session: ShortTermMemory) -> str:
+        """结合对话历史生成更精准的查询。"""
+        messages = session.to_langchain_messages()
+        if not messages:
+            return query
+
+        # 提取最近 2 轮助手回复中的关键词
+        recent = messages[-4:]
+        keywords = []
+        for msg in recent:
+            if hasattr(msg, 'content') and isinstance(msg.content, str):
+                # 提取引号内容和 UI 元素
+                import re
+                quoted = re.findall(r'[""「」*]([^""「」*]+)[""「」*]', msg.content)
+                keywords.extend(quoted[:2])
+
+        if keywords:
+            context = ' '.join(keywords[-3:])
+            return f"{context} {query}"
+        return query
+
+    # -----------------------------------------------------------------------
     # 辅助
     # -----------------------------------------------------------------------
-    async def _retrieve_context(self, query: str) -> str:
-        """检索文档上下文 + 用户画像 + 相似案例。"""
+    async def _retrieve_context(self, query: str, session: ShortTermMemory | None = None) -> str:
+        """检索文档上下文 + 用户画像 + 相似案例。支持查询改写和上下文感知。"""
         context_parts = []
 
-        # 文档检索
+        # 上下文感知查询（T2.3）
+        enhanced_query = self._build_contextual_query(query, session) if session else query
+
+        # 查询改写 + 多路检索（T2.2）
+        queries = await self._rewrite_query(enhanced_query)
+
+        # 文档检索（多路合并）
         if self._long_term:
-            docs = await self._long_term.search(query, collection="docs", top_k=5)
-            if docs:
-                context_parts.append("参考文档：\n" + "\n---\n".join(d.get("text", "") for d in docs))
+            all_docs = []
+            for q in queries:
+                docs = await self._long_term.search(q, collection="docs", top_k=3)
+                all_docs.extend(docs)
+
+            # 去重
+            seen = set()
+            unique_docs = []
+            for doc in all_docs:
+                key = doc.get("text", "")[:80]
+                if key not in seen:
+                    seen.add(key)
+                    unique_docs.append(doc)
+
+            if unique_docs:
+                context_parts.append("参考文档：\n" + "\n---\n".join(d.get("text", "") for d in unique_docs[:5]))
 
         # 用户画像注入
         if self._persistent_memory:

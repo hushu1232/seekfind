@@ -35,6 +35,8 @@
       "js": [
         "content/snapshot.js",
         "content/observer.js",
+        "content/spotlight.js",
+        "content/shortcuts.js",
         "content/highlight.js",
         "content/particle.js",
         "content/privacy.js",

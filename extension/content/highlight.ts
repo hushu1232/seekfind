@@ -16,6 +16,7 @@
 import { INTERNAL_MSG } from "../common/constants";
 import type { HighlightCommand, HighlightStyle } from "../common/types";
 import { ParticleAnimator } from "./particle";
+import { addSpotlight, clearSpotlight } from "./spotlight";
 
 // ---------------------------------------------------------------------------
 // 常量
@@ -130,6 +131,14 @@ function highlightElement(cmd: HighlightCommand): void {
   const style: HighlightStyle = cmd.style || "pulse";
   const duration = cmd.duration || DEFAULT_DURATION;
 
+  // 聚光灯效果（T3.1 新增）
+  if (style === "spotlight") {
+    if (target instanceof HTMLElement) {
+      addSpotlight(target, { duration });
+    }
+    return;
+  }
+
   // 高亮框
   const box = document.createElement("div");
   box.className = `qiuwen-highlight-box style-${style}`;
@@ -183,6 +192,7 @@ function highlightElement(cmd: HighlightCommand): void {
 function clearHighlights(): void {
   if (highlightContainer) highlightContainer.innerHTML = "";
   particleAnimator?.stop();
+  clearSpotlight(); // T3.1: 清除聚光灯
 }
 
 // ---------------------------------------------------------------------------

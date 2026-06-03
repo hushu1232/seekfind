@@ -129,6 +129,7 @@ async def get_config():
         "ollama_model": settings.ollama_model,
         "cloud_model": settings.cloud_model if settings.cloud_api_key else None,
         "fallback_threshold": settings.fallback_threshold,
+        "enterprise_configured": bool(settings.enterprise_api_base_url and settings.enterprise_api_key),
     }
 
 
@@ -142,6 +143,46 @@ async def update_model_config(body: ModelConfigUpdate):
     if agent:
         await agent.reload_model()
     return {"status": "ok", "model_strategy": settings.model_strategy.value}
+
+
+# ---------------------------------------------------------------------------
+# T4.3: 企业版 API（面向企业员工培训）
+# ---------------------------------------------------------------------------
+@app.get("/api/enterprise/status")
+async def enterprise_status():
+    """企业版状态：LLM 来源、降级状态等"""
+    try:
+        from enterprise import get_enterprise_llm_manager
+        manager = get_enterprise_llm_manager()
+        return manager.get_status()
+    except Exception as e:
+        return {
+            "current_source": "local",
+            "enterprise_configured": False,
+            "error": str(e),
+        }
+
+
+@app.post("/api/enterprise/check")
+async def enterprise_check():
+    """检查企业 API 连通性"""
+    if not settings.enterprise_api_base_url or not settings.enterprise_api_key:
+        return {"status": "not_configured", "message": "企业 API 未配置"}
+
+    try:
+        import httpx
+        async with httpx.AsyncClient(timeout=5) as client:
+            # 尝试连接企业 API
+            response = await client.get(
+                f"{settings.enterprise_api_base_url}/models",
+                headers={"Authorization": f"Bearer {settings.enterprise_api_key}"},
+            )
+            if response.status_code == 200:
+                return {"status": "ok", "message": "企业 API 连接正常"}
+            else:
+                return {"status": "error", "message": f"企业 API 返回 {response.status_code}"}
+    except Exception as e:
+        return {"status": "error", "message": f"无法连接企业 API: {str(e)}"}
 
 
 # ---------------------------------------------------------------------------

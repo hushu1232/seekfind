@@ -125,7 +125,7 @@ export interface SnapshotOptions {
 // ---------------------------------------------------------------------------
 
 /** 高亮样式类型 */
-export type HighlightStyle = "pulse" | "glow" | "arrow";
+export type HighlightStyle = "pulse" | "glow" | "arrow" | "spotlight";
 
 export interface HighlightCommand {
   selector: string;

@@ -9,6 +9,7 @@
  *   4. 显示步骤卡片（分步指引 + 高亮 + 反馈按钮）
  *   5. 显示截图标注（base64 图片）
  *   6. 恢复聊天历史
+ *   7. T3.3: 结构化回复渲染
  *
  * 消息流向：
  *   用户输入 → chrome.runtime.sendMessage → Service Worker → WS → 后端
@@ -17,6 +18,8 @@
 
 import { INTERNAL_MSG, STORAGE_KEYS, API_BASE } from "../common/constants";
 import type { ServerMessage, ChatMessage } from "../common/types";
+import { initWelcomeFlow } from "./welcome";
+import { getDiagnostics, renderDiagnosticReport } from "./diagnostics";
 
 // ---------------------------------------------------------------------------
 // 录制状态
@@ -32,6 +35,8 @@ const messagesEl = document.getElementById("messages")!;
 const userInputEl = document.getElementById("user-input") as HTMLInputElement;
 const sendBtnEl = document.getElementById("send-btn") as HTMLButtonElement;
 const wsStatusEl = document.getElementById("ws-status")!;
+const welcomeContainerEl = document.getElementById("welcome-container");
+const diagnosticBtnEl = document.getElementById("diagnostic-btn");
 
 let isProcessing = false;
 let currentAssistantEl: HTMLDivElement | null = null;
@@ -56,6 +61,51 @@ chrome.storage.local.get(
     }
   }
 );
+
+// ---------------------------------------------------------------------------
+// T4.1: 新手引导
+// ---------------------------------------------------------------------------
+if (welcomeContainerEl) {
+  const welcomeFlow = initWelcomeFlow(welcomeContainerEl);
+  welcomeFlow.start();
+}
+
+// ---------------------------------------------------------------------------
+// T4.2: 诊断按钮
+// ---------------------------------------------------------------------------
+if (diagnosticBtnEl) {
+  diagnosticBtnEl.addEventListener("click", async () => {
+    const diagnostics = getDiagnostics();
+    const report = await diagnostics.runFullCheck();
+
+    // 创建诊断弹窗
+    const modal = document.createElement("div");
+    modal.className = "diagnostic-modal";
+
+    const modalContent = document.createElement("div");
+    modalContent.className = "diagnostic-modal-content";
+
+    const closeBtn = document.createElement("button");
+    closeBtn.className = "diagnostic-modal-close";
+    closeBtn.textContent = "✕";
+    closeBtn.addEventListener("click", () => modal.remove());
+
+    const reportContainer = document.createElement("div");
+    reportContainer.className = "diagnostic-report";
+
+    modalContent.appendChild(closeBtn);
+    modalContent.appendChild(reportContainer);
+    modal.appendChild(modalContent);
+    document.body.appendChild(modal);
+
+    renderDiagnosticReport(reportContainer, report);
+
+    // 点击背景关闭
+    modal.addEventListener("click", (e) => {
+      if (e.target === modal) modal.remove();
+    });
+  });
+}
 
 // ---------------------------------------------------------------------------
 // 启动状态检测
@@ -298,17 +348,136 @@ chrome.runtime.onMessage.addListener((msg) => {
 
 /**
  * 追加消息气泡。使用 DOM API 避免 XSS。
+ * T3.3: 支持结构化回复渲染
  */
 function appendMessage(role: "user" | "assistant", content: string, thinking = false): HTMLDivElement {
   const div = document.createElement("div");
   div.className = `message ${role}${thinking ? " thinking" : ""}`;
   const span = document.createElement("span");
   span.className = "message-text";
-  span.textContent = content;  // 安全：textContent 自动转义
+
+  // T3.3: 结构化回复渲染
+  if (role === "assistant" && !thinking) {
+    renderStructuredContent(span, content);
+  } else {
+    span.textContent = content;  // 安全：textContent 自动转义
+  }
+
   div.appendChild(span);
   messagesEl.appendChild(div);
   scrollToBottom();
   return div;
+}
+
+/**
+ * T3.3: 渲染结构化回复
+ * 解析 📍 引导、📚 来源、步骤列表等格式
+ */
+function renderStructuredContent(container: HTMLElement, content: string): void {
+  // 按行分割
+  const lines = content.split("\n");
+
+  for (const line of lines) {
+    const trimmed = line.trim();
+    if (!trimmed) {
+      container.appendChild(document.createElement("br"));
+      continue;
+    }
+
+    // 📍 引导行
+    if (trimmed.startsWith("📍")) {
+      const guideDiv = document.createElement("div");
+      guideDiv.className = "structured-guide";
+
+      const icon = document.createElement("span");
+      icon.className = "guide-icon";
+      icon.textContent = "📍";
+
+      const text = document.createElement("span");
+      text.className = "guide-text";
+      // 解析加粗文本
+      renderBoldText(text, trimmed.substring(1).trim());
+
+      guideDiv.appendChild(icon);
+      guideDiv.appendChild(text);
+      container.appendChild(guideDiv);
+      continue;
+    }
+
+    // 📚 来源行
+    if (trimmed.startsWith("📚")) {
+      const sourceDiv = document.createElement("div");
+      sourceDiv.className = "structured-source";
+      sourceDiv.textContent = trimmed;
+      container.appendChild(sourceDiv);
+      continue;
+    }
+
+    // 步骤列表 (步骤 N: 或 Step N:)
+    if (/^(步骤|Step)\s*\d+[：:]/i.test(trimmed)) {
+      const stepDiv = document.createElement("div");
+      stepDiv.className = "structured-step";
+
+      const numMatch = trimmed.match(/^(步骤|Step)\s*(\d+)/i);
+      if (numMatch) {
+        const num = document.createElement("span");
+        num.className = "step-number";
+        num.textContent = numMatch[2];
+        stepDiv.appendChild(num);
+      }
+
+      const text = document.createElement("span");
+      text.className = "step-text";
+      renderBoldText(text, trimmed.replace(/^(步骤|Step)\s*\d+[：:]?\s*/i, ""));
+      stepDiv.appendChild(text);
+
+      container.appendChild(stepDiv);
+      continue;
+    }
+
+    // 下一步: 行
+    if (trimmed.startsWith("下一步:") || trimmed.startsWith("下一步：")) {
+      const nextDiv = document.createElement("div");
+      nextDiv.className = "structured-next";
+
+      const label = document.createElement("span");
+      label.className = "next-label";
+      label.textContent = "下一步: ";
+
+      const text = document.createElement("span");
+      renderBoldText(text, trimmed.replace(/^下一步[：:]\s*/, ""));
+
+      nextDiv.appendChild(label);
+      nextDiv.appendChild(text);
+      container.appendChild(nextDiv);
+      continue;
+    }
+
+    // 普通行
+    const lineDiv = document.createElement("div");
+    renderBoldText(lineDiv, trimmed);
+    container.appendChild(lineDiv);
+  }
+}
+
+/**
+ * 渲染加粗文本 (**text**)
+ */
+function renderBoldText(container: HTMLElement, text: string): void {
+  const parts = text.split(/\*\*(.*?)\*\*/g);
+  for (let i = 0; i < parts.length; i++) {
+    if (i % 2 === 1) {
+      // 加粗部分
+      const strong = document.createElement("strong");
+      strong.textContent = parts[i];
+      container.appendChild(strong);
+    } else {
+      // 普通文本
+      if (parts[i]) {
+        container.appendChild(document.createTextNode(parts[i]));
+      }
+    }
+  }
 }
 
 /**

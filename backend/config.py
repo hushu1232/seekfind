@@ -6,12 +6,17 @@
   - 使用 pydantic-settings 从 .env 文件加载所有配置
   - 提供类型安全的配置访问
   - 支持运行时热切换（model_strategy 等）
+  - T4.3: 支持企业版云端 API 备选
 
 用法：
   from config import settings
   print(settings.ollama_model)  # "qwen2.5:7b"
 
 配置优先级：环境变量 > .env 文件 > 代码默认值
+
+企业部署：
+  设置 MODEL_STRATEGY=enterprise 启用云端 API 备选
+  当本地 Ollama 不可用时自动降级到企业 API
 """
 
 from enum import Enum
@@ -24,14 +29,16 @@ from pydantic_settings import BaseSettings, SettingsConfigDict
 # ---------------------------------------------------------------------------
 class ModelStrategy(str, Enum):
     """
-    三层模型策略：
-      - LOCAL:  仅本地 Ollama 模型（零成本，适合 8GB+ 显存）
-      - CLOUD:  仅云端 API（需 API Key + 联网 + 付费）
-      - HYBRID: 本地优先，连续失败 N 次后自动降级云端（推荐）
+    四层模型策略：
+      - LOCAL:      仅本地 Ollama 模型（零成本，适合 8GB+ 显存）
+      - CLOUD:      仅云端 API（需 API Key + 联网 + 付费）
+      - HYBRID:     本地优先，连续失败 N 次后自动降级云端（推荐）
+      - ENTERPRISE: 企业模式，本地优先 + 云端备选（面向企业培训）
     """
     LOCAL = "local"
     CLOUD = "cloud"
     HYBRID = "hybrid"
+    ENTERPRISE = "enterprise"
 
 
 # ---------------------------------------------------------------------------
@@ -73,6 +80,20 @@ class Settings(BaseSettings):
     # --- 自动降级阈值 ----------------------------------------------------
     # 连续 N 次工具调用失败后，HYBRID 模式自动切换到云端模型重试
     fallback_threshold: int = 3
+
+    # --- T4.3: 企业模式配置（面向企业员工培训）-----------------------------
+    enterprise_api_base_url: str = ""   # 企业 API 地址（如 https://api.company.com/v1）
+    enterprise_api_key: str = ""        # 企业 API Key
+    enterprise_model: str = ""          # 企业模型名称（如 gpt-4o）
+    enterprise_auto_fallback: bool = True   # 本地不可用时自动降级
+    enterprise_notify_user: bool = True     # 降级时通知用户
+    enterprise_privacy_warning: bool = True # 降级时显示隐私警告
+
+    # --- 企业部署配置 ----------------------------------------------------
+    enterprise_deployment_mode: bool = False  # 企业批量部署模式
+    enterprise_auto_update: bool = True       # 自动更新知识库
+    enterprise_shared_knowledge: bool = True  # 共享知识库（多用户）
+    enterprise_audit_log: bool = False        # 审计日志（记录所有操作）
 
     # --- Chroma 向量库 ---------------------------------------------------
     chroma_host: str = "chroma"   # docker-compose 服务名
